@@ -1,0 +1,451 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import {
+  Eye,
+  EyeSlash,
+  Trash,
+  Warning,
+  CheckCircle,
+  XCircle,
+  CircleNotch,
+} from '@phosphor-icons/react';
+import { settingsApi } from '@/lib/api';
+import type { ApiKey } from '@/types';
+import { useToast } from './ui/toast';
+
+/**
+ * AppSettings Component
+ * Educational Note: Manages API keys and application settings in a dialog.
+ * Extracted from Dashboard to follow the principle of component modularity.
+ *
+ * Features:
+ * - API key CRUD operations
+ * - Real-time validation
+ * - Masked display for security
+ * - Organized by category (AI, Storage, Utility)
+ */
+
+interface AppSettingsProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+interface ValidationState {
+  [key: string]: {
+    validating: boolean;
+    valid?: boolean;
+    message?: string;
+  };
+}
+
+export const AppSettings: React.FC<AppSettingsProps> = ({ open, onOpenChange }) => {
+  // UI State
+  const [showApiKeys, setShowApiKeys] = useState<{ [key: string]: boolean }>({});
+
+  // API Keys State
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [modifiedKeys, setModifiedKeys] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [validationState, setValidationState] = useState<ValidationState>({});
+
+  // Toast notifications
+  const { success, error, info } = useToast();
+
+  // Load API keys when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadApiKeys();
+    }
+  }, [open]);
+
+  /**
+   * Load API keys from backend
+   * Educational Note: Fetches current API key status with masked values
+   */
+  const loadApiKeys = async () => {
+    setLoading(true);
+    try {
+      const keys = await settingsApi.getApiKeys();
+      setApiKeys(keys);
+      // Clear modified keys when loading fresh data
+      setModifiedKeys({});
+    } catch (err) {
+      console.error('Failed to load API keys:', err);
+      error('Failed to load API keys');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Save all modified API keys to backend
+   * Educational Note: Only sends keys that were actually modified to reduce
+   * unnecessary writes to the .env file
+   */
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Prepare updates - only send modified keys
+      const updates = Object.entries(modifiedKeys).map(([id, value]) => ({
+        id,
+        value
+      }));
+
+      if (updates.length > 0) {
+        await settingsApi.updateApiKeys(updates);
+        success(`Successfully saved ${updates.length} API key${updates.length > 1 ? 's' : ''}`);
+
+        // Clear modified keys after successful save
+        setModifiedKeys({});
+        // Clear validation states after save
+        setValidationState({});
+
+        // Reload to get fresh masked values
+        await loadApiKeys();
+      } else {
+        info('No changes to save');
+      }
+
+      onOpenChange(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Failed to save API keys:', err);
+      error(`Failed to save API keys: ${errorMessage}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Update an API key value in local state
+   * Educational Note: Tracks changes locally without immediately saving,
+   * allowing users to make multiple edits before saving
+   */
+  const updateApiKey = (id: string, value: string) => {
+    // Track modified keys separately
+    setModifiedKeys(prev => ({ ...prev, [id]: value }));
+    // Update display immediately
+    setApiKeys(prev => prev.map(key =>
+      key.id === id ? { ...key, value } : key
+    ));
+  };
+
+  /**
+   * Toggle visibility of an API key (show/hide)
+   */
+  const toggleShowApiKey = (id: string) => {
+    setShowApiKeys(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  /**
+   * Delete an API key from backend
+   * Educational Note: This removes the key from .env file
+   */
+  const deleteApiKey = async (id: string) => {
+    try {
+      await settingsApi.deleteApiKey(id);
+      // Clear from modified keys
+      setModifiedKeys(prev => {
+        const newKeys = { ...prev };
+        delete newKeys[id];
+        return newKeys;
+      });
+      // Update display
+      setApiKeys(prev => prev.map(key =>
+        key.id === id ? { ...key, value: '', is_set: false } : key
+      ));
+      success('API key deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete API key:', err);
+      error('Failed to delete API key');
+    }
+  };
+
+  /**
+   * Validate an API key by making a test request, then auto-save if valid
+   * Educational Note: This combines validation and saving in one step for better UX.
+   * If the key works, we immediately save it to the .env file.
+   */
+  const validateApiKey = async (id: string) => {
+    const value = modifiedKeys[id] || apiKeys.find(k => k.id === id)?.value || '';
+    const keyName = apiKeys.find(k => k.id === id)?.name || id;
+
+    // Don't validate masked values
+    if (value.includes('***')) {
+      info('Cannot validate a masked API key. Please enter a new key.');
+      return;
+    }
+
+    setValidationState(prev => ({
+      ...prev,
+      [id]: { validating: true }
+    }));
+
+    try {
+      // Step 1: Validate the API key
+      const result = await settingsApi.validateApiKey(id, value);
+
+      if (result.valid) {
+        // Step 2: If validation succeeds, immediately save the key
+        try {
+          await settingsApi.updateApiKeys([{ id, value }]);
+
+          // Remove from modified keys since it's now saved
+          setModifiedKeys(prev => {
+            const newKeys = { ...prev };
+            delete newKeys[id];
+            return newKeys;
+          });
+
+          // Update validation state to show success
+          setValidationState(prev => ({
+            ...prev,
+            [id]: {
+              validating: false,
+              valid: true,
+              message: result.message
+            }
+          }));
+
+          // Show success message
+          success(`${keyName} validated and saved successfully!`);
+
+          // Reload API keys to get fresh masked values
+          await loadApiKeys();
+        } catch (saveErr) {
+          const saveErrorMessage = saveErr instanceof Error ? saveErr.message : 'Failed to save';
+          setValidationState(prev => ({
+            ...prev,
+            [id]: {
+              validating: false,
+              valid: false,
+              message: `Validation succeeded but save failed: ${saveErrorMessage}`
+            }
+          }));
+          error(`Failed to save ${keyName}: ${saveErrorMessage}`);
+        }
+      } else {
+        // Validation failed
+        setValidationState(prev => ({
+          ...prev,
+          [id]: {
+            validating: false,
+            valid: false,
+            message: result.message
+          }
+        }));
+        error(`${keyName} validation failed: ${result.message}`);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Validation failed';
+      setValidationState(prev => ({
+        ...prev,
+        [id]: {
+          validating: false,
+          valid: false,
+          message: errorMessage
+        }
+      }));
+      error(`Failed to validate ${keyName}: ${errorMessage}`);
+    }
+  };
+
+  /**
+   * Render a single API key input field with controls
+   * Educational Note: Extracted to a separate function to follow DRY principle
+   * and make the component more maintainable
+   */
+  const renderApiKeyField = (apiKey: ApiKey) => (
+    <div key={apiKey.id} className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="flex items-center gap-2">
+          {apiKey.name}
+          {apiKey.required && (
+            <span className="text-xs text-destructive">*Required</span>
+          )}
+        </Label>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => toggleShowApiKey(apiKey.id)}
+          >
+            {showApiKeys[apiKey.id] ? (
+              <EyeSlash size={16} />
+            ) : (
+              <Eye size={16} />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => deleteApiKey(apiKey.id)}
+            disabled={!apiKey.value && !apiKey.is_set}
+          >
+            <Trash size={16} />
+          </Button>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          type={showApiKeys[apiKey.id] ? 'text' : 'password'}
+          placeholder={`Enter ${apiKey.name} key...`}
+          value={modifiedKeys[apiKey.id] !== undefined ? modifiedKeys[apiKey.id] : apiKey.value}
+          onChange={(e) => updateApiKey(apiKey.id, e.target.value)}
+          className="font-mono text-sm flex-1"
+        />
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => validateApiKey(apiKey.id)}
+          disabled={!modifiedKeys[apiKey.id] || modifiedKeys[apiKey.id].includes('***') || validationState[apiKey.id]?.validating}
+          className="min-w-[120px]"
+        >
+          {validationState[apiKey.id]?.validating ? (
+            <>
+              <CircleNotch size={16} className="animate-spin mr-1" />
+              Saving...
+            </>
+          ) : (
+            'Validate & Save'
+          )}
+        </Button>
+      </div>
+      <div className="space-y-1">
+        <p className="text-xs text-muted-foreground">{apiKey.description}</p>
+        {validationState[apiKey.id]?.message && (
+          <div className={`flex items-center gap-1 text-xs ${
+            validationState[apiKey.id]?.valid ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {validationState[apiKey.id]?.valid ? (
+              <CheckCircle size={12} />
+            ) : (
+              <XCircle size={12} />
+            )}
+            <span>{validationState[apiKey.id]?.message}</span>
+          </div>
+        )}
+        {apiKey.is_set && !modifiedKeys[apiKey.id] && (
+          <div className="flex items-center gap-1 text-xs text-green-600">
+            <CheckCircle size={12} />
+            <span>Configured</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  /**
+   * Render API keys grouped by category
+   * Educational Note: This provides better organization and UX by grouping
+   * related settings together
+   */
+  const renderCategorySection = (title: string, category: 'ai' | 'storage' | 'utility') => {
+    const categoryKeys = apiKeys.filter(k => k.category === category);
+    if (categoryKeys.length === 0) return null;
+
+    return (
+      <div>
+        <h3 className="text-sm font-semibold mb-3">{title}</h3>
+        <div className="space-y-3">
+          {categoryKeys.map(renderApiKeyField)}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-card">
+        <DialogHeader>
+          <DialogTitle>App Settings</DialogTitle>
+          <DialogDescription>
+            Configure API keys and application settings. Keys are automatically saved after successful validation.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Scrollable content with fade indicator */}
+        <div className="relative">
+          <ScrollArea className="h-[500px]">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <CircleNotch size={32} className="animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-6 px-1 pb-12">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Warning size={16} />
+                  <p>API keys are securely stored in your backend .env file</p>
+                </div>
+
+                {/* AI Models Section */}
+                {renderCategorySection('AI Models', 'ai')}
+
+                <Separator />
+
+                {/* Storage Section */}
+                {renderCategorySection('Storage & Database', 'storage')}
+
+                <Separator />
+
+                {/* Utility Services Section */}
+                {renderCategorySection('Utility Services', 'utility')}
+              </div>
+            </div>
+          )}
+          </ScrollArea>
+          {/* Bottom fade gradient to indicate more content */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+        </div>
+
+        <p className="text-xs text-muted-foreground text-center py-2">
+          Scroll to see all settings
+        </p>
+
+        <DialogFooter>
+          {Object.keys(modifiedKeys).length > 0 ? (
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={saving || loading}
+                variant="default"
+              >
+                {saving ? (
+                  <>
+                    <CircleNotch size={16} className="mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    Save {Object.keys(modifiedKeys).length} Unsaved Key{Object.keys(modifiedKeys).length > 1 ? 's' : ''}
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

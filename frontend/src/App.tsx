@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Dashboard from '@/components/Dashboard'
 import ProjectWorkspace from '@/components/ProjectWorkspace'
 import { Project } from '@/types'
+import { ToastContainer, useToast } from '@/components/ui/toast'
 
 function App() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null)
+  const { toasts, dismissToast } = useToast()
 
   return (
     <div className="h-screen bg-background">
@@ -16,6 +18,9 @@ function App() {
       ) : (
         <Dashboard onOpenProject={setCurrentProject} />
       )}
+      
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

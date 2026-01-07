@@ -20,7 +20,7 @@ interface ProjectCardProps {
   onDelete: (projectId: string) => void
 }
 
-export default function ProjectCard({ project, onOpen, onUpdate, onDelete }: ProjectCardProps) {
+export default function ProjectCard({ project, onOpen, onUpdate: _onUpdate, onDelete }: ProjectCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {

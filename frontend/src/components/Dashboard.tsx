@@ -6,6 +6,7 @@ import { Project } from '@/types'
 import { projectsApi } from '@/lib/api'
 import CreateProjectDialog from '@/components/CreateProjectDialog'
 import ProjectCard from '@/components/ProjectCard'
+import { AppSettings } from '@/components/AppSettings'
 
 interface DashboardProps {
   onOpenProject: (project: Project) => void
@@ -16,6 +17,7 @@ export default function Dashboard({ onOpenProject }: DashboardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showAppSettings, setShowAppSettings] = useState(false)
 
   useEffect(() => {
     loadProjects()
@@ -82,7 +84,7 @@ export default function Dashboard({ onOpenProject }: DashboardProps) {
               <p className="text-muted-foreground">Your AI-powered knowledge assistant</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={() => setShowAppSettings(true)}>
                 <Gear size={20} />
               </Button>
             </div>
@@ -152,6 +154,12 @@ export default function Dashboard({ onOpenProject }: DashboardProps) {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onProjectCreated={handleProjectCreated}
+      />
+
+      {/* App Settings Dialog */}
+      <AppSettings
+        open={showAppSettings}
+        onOpenChange={setShowAppSettings}
       />
     </div>
   )

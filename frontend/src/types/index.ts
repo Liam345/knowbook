@@ -17,3 +17,13 @@ export interface ApiResponse<T = any> {
   data?: T
   error?: string
 }
+
+export interface ApiKey {
+  id: string
+  name: string
+  description: string
+  category: 'ai' | 'storage' | 'utility'
+  required?: boolean
+  value: string
+  is_set: boolean
+}
