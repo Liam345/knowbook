@@ -11,6 +11,8 @@ def create_app():
     
     # Register blueprints
     from app.api.projects import bp as projects_bp
+    from app.api.settings import settings_bp
     app.register_blueprint(projects_bp, url_prefix='/api/v1')
+    app.register_blueprint(settings_bp)
     
     return app
