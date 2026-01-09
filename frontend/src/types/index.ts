@@ -18,6 +18,24 @@ export interface ApiResponse<T = any> {
   error?: string
 }
 
+export interface Source {
+  id: string
+  name: string
+  description: string
+  original_name: string
+  file_path: string
+  file_size: number
+  file_type: string
+  category: string
+  status: 'uploaded' | 'processing' | 'embedding' | 'ready' | 'failed'
+  active: boolean
+  created_at: string
+  updated_at: string
+  processing_info?: Record<string, any>
+  embedding_info?: Record<string, any>
+  summary_info?: Record<string, any>
+}
+
 export interface ApiKey {
   id: string
   name: string

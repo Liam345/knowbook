@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { Project } from '@/types'
+import SourcesPanel from './SourcesPanel'
 
 interface ProjectWorkspaceProps {
   project: Project
@@ -30,13 +31,7 @@ export default function ProjectWorkspace({ project, onBackToDashboard }: Project
       {/* Main Workspace */}
       <div className="flex-1 flex">
         {/* Sources Panel */}
-        <div className="w-80 border-r bg-muted/20 p-4">
-          <h2 className="font-semibold mb-4">Sources</h2>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No sources yet</p>
-            <p className="text-sm">Upload documents to get started</p>
-          </div>
-        </div>
+        <SourcesPanel project={project} />
 
         {/* Chat Panel */}
         <div className="flex-1 flex flex-col">
