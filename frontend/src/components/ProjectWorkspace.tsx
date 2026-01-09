@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { Project } from '@/types'
 import SourcesPanel from './SourcesPanel'
+import ChatPanel from './ChatPanel'
 
 interface ProjectWorkspaceProps {
   project: Project
@@ -34,17 +35,7 @@ export default function ProjectWorkspace({ project, onBackToDashboard }: Project
         <SourcesPanel project={project} />
 
         {/* Chat Panel */}
-        <div className="flex-1 flex flex-col">
-          <div className="border-b p-4">
-            <h2 className="font-semibold">Chat</h2>
-          </div>
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <p>Start a conversation</p>
-              <p className="text-sm">Ask questions about your sources</p>
-            </div>
-          </div>
-        </div>
+        <ChatPanel project={project} />
 
         {/* Studio Panel */}
         <div className="w-80 border-l bg-muted/20 p-4">

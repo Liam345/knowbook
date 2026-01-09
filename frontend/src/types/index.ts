@@ -45,3 +45,37 @@ export interface ApiKey {
   value: string
   is_set: boolean
 }
+
+export interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string | any[]
+  timestamp: string
+  model?: string
+  tokens?: {
+    input_tokens: number
+    output_tokens: number
+  }
+  error?: boolean
+}
+
+export interface ChatMetadata {
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
+  last_message_at: string | null
+  message_count: number
+}
+
+export interface Chat {
+  id: string
+  project_id: string
+  title: string
+  created_at: string
+  updated_at: string
+  last_message_at: string | null
+  message_count: number
+  messages: Message[]
+  studio_signals?: any[]
+}
