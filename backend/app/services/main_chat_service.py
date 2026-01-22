@@ -7,17 +7,26 @@ Message Flow:
 1. User message - What the user types in chat
 2. Assistant response - Two types:
    a. Text response - Final answer to user (stored and displayed)
-   b. Tool use - Claude wants to search sources
+   b. Tool use - Claude wants to search sources or store memory
 3. User message (tool_result) - Results from tool execution sent back
 4. Repeat 2-3 until Claude gives text response
 
 The service uses message_service for all message handling and tool parsing.
+Tool executors handle the actual tool execution (search, memory, signals).
 """
 from typing import Dict, Any, Tuple, List, Optional
 
 from app.services.chat_service import chat_service
 from app.services.claude_service import claude_service
 from app.services.message_service import message_service
+from app.services.source_service import source_service
+from app.services.memory_service import memory_service
+from app.services.tool_executors import (
+    source_search_executor,
+    memory_executor,
+    studio_signal_executor
+)
+from app.tools import get_chat_tools
 from app.utils import claude_parsing_utils
 
 
@@ -35,78 +44,89 @@ class MainChatService:
 
     def __init__(self):
         """Initialize the service."""
-        self._memory_tool = None
-        # Future: Additional tools will be loaded here
+        pass
 
-    def _get_memory_tool(self) -> Dict[str, Any]:
-        """Load the store_memory tool definition (basic version for now)."""
-        if self._memory_tool is None:
-            # Basic memory tool definition - simplified version
-            self._memory_tool = {
-                "name": "store_memory",
-                "description": "Store important information to remember for future conversations",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "user_memory": {
-                            "type": "string",
-                            "description": "Personal information about the user to remember"
-                        },
-                        "project_memory": {
-                            "type": "string", 
-                            "description": "Information about this specific project to remember"
-                        },
-                        "why_generated": {
-                            "type": "string",
-                            "description": "Brief explanation of why this memory is important"
-                        }
-                    }
-                }
-            }
-        return self._memory_tool
+    def _get_active_sources(self, project_id: str) -> List[Dict[str, Any]]:
+        """
+        Get list of active, ready sources for a project.
 
-    def _get_tools(self, has_active_sources: bool = False) -> List[Dict[str, Any]]:
+        Educational Note: Only sources that are both active AND ready
+        (fully processed) are available for searching.
+
+        Args:
+            project_id: Project UUID
+
+        Returns:
+            List of active source metadata
+        """
+        all_sources = source_service.list_sources(project_id)
+        return [
+            s for s in all_sources
+            if s.get('active', True) and s.get('status') == 'ready'
+        ]
+
+    def _get_tools(self, has_sources: bool = False, has_csv: bool = False) -> List[Dict[str, Any]]:
         """
         Get tools list for Claude API call.
 
-        Educational Note: Memory tool is always available.
-        Search tool would be available when there are active sources (future implementation).
+        Educational Note: Tools are loaded from JSON definitions.
+        - Memory and studio_signal are always available
+        - search_sources only when project has active sources
+        - analyze_csv only when project has CSV sources (future)
 
         Args:
-            has_active_sources: Whether project has active sources
+            has_sources: Whether project has active sources
+            has_csv: Whether project has CSV sources
 
         Returns:
             List of tool definitions
         """
-        # Always include memory tool
-        tools = [self._get_memory_tool()]
+        return get_chat_tools(has_sources=has_sources, has_csv=has_csv)
 
-        # Future: Add search_sources tool when has_active_sources is True
-        # if has_active_sources:
-        #     tools.append(self._get_search_tool())
-
-        return tools
-
-    def _build_system_prompt(self, project_id: str, base_prompt: str = "") -> str:
+    def _build_system_prompt(
+        self,
+        project_id: str,
+        active_sources: List[Dict[str, Any]],
+        base_prompt: str = ""
+    ) -> str:
         """
         Build system prompt with memory and source context appended.
 
         Educational Note: Context is rebuilt on every message to reflect
         current state (memory updates, active/inactive sources).
+
+        Args:
+            project_id: Project UUID
+            active_sources: List of active source metadata
+            base_prompt: Optional custom base prompt
+
+        Returns:
+            Complete system prompt with all context
         """
         if not base_prompt:
             base_prompt = """You are KnowBook, an AI assistant that helps users work with their documents and sources.
 
 You are knowledgeable, helpful, and concise. You can help users understand their content, answer questions about their sources, and assist with various tasks.
 
-If users ask questions that would benefit from searching their sources, let them know that source search capabilities will be available soon.
+When answering questions about sources, use the search_sources tool to find relevant information. Include citations in your response using the format [[cite:CHUNK_ID]] where CHUNK_ID comes from the search results.
 
-You have access to a memory tool to remember important information about users and their projects."""
+You have access to tools:
+- search_sources: Search through project sources using keywords or semantic search
+- store_memory: Remember important information about users and projects
+- studio_signal: Signal when studio tools might help the user"""
 
-        # Future: Add memory and source context loading
-        # full_context = context_loader.build_full_context(project_id)
-        # if full_context:
-        #     return base_prompt + "\n" + full_context
+        # Add memory context
+        memory_context = memory_service.build_memory_context(project_id)
+        if memory_context:
+            base_prompt += "\n\n" + memory_context
+
+        # Add available sources context
+        if active_sources:
+            sources_list = "\n".join([
+                f"- {s.get('name', 'Unnamed')} (ID: {s['id']}, Type: {s.get('file_type', 'unknown')})"
+                for s in active_sources
+            ])
+            base_prompt += f"\n\n## Available Sources\nThe user has the following sources available for searching:\n{sources_list}"
 
         return base_prompt
 
@@ -121,20 +141,61 @@ You have access to a memory tool to remember important information about users a
         Execute a tool and return result string.
 
         Educational Note: Routes tool calls to appropriate executor.
-        Currently only supports store_memory (basic implementation).
+        Each executor handles its specific tool logic.
+
+        Args:
+            project_id: Project UUID
+            chat_id: Chat UUID
+            tool_name: Name of tool to execute
+            tool_input: Tool input parameters
+
+        Returns:
+            Tool result as string (JSON for structured data)
         """
-        if tool_name == "store_memory":
-            # Basic memory implementation - just acknowledge for now
-            user_memory = tool_input.get("user_memory", "")
-            project_memory = tool_input.get("project_memory", "")
-            why_generated = tool_input.get("why_generated", "")
-            
-            # Future: Implement actual memory storage
-            # For now, just acknowledge the memory request
-            return f"Memory stored successfully. Reason: {why_generated}"
+        import json
+
+        if tool_name == "search_sources":
+            # Execute source search
+            result = source_search_executor.execute(
+                project_id=project_id,
+                source_id=tool_input.get("source_id"),
+                keywords=tool_input.get("keywords"),
+                query=tool_input.get("query")
+            )
+            return json.dumps(result)
+
+        elif tool_name == "store_memory":
+            # Execute memory storage (non-blocking)
+            result = memory_executor.execute(
+                project_id=project_id,
+                user_memory=tool_input.get("user_memory"),
+                project_memory=tool_input.get("project_memory"),
+                why_generated=tool_input.get("why_generated", "")
+            )
+            return json.dumps(result)
+
+        elif tool_name == "studio_signal":
+            # Execute studio signal storage
+            signals = tool_input.get("signals", [])
+            result = studio_signal_executor.execute(
+                project_id=project_id,
+                chat_id=chat_id,
+                signals=signals
+            )
+            return json.dumps(result)
+
+        elif tool_name == "analyze_csv":
+            # Future: CSV analysis tool
+            return json.dumps({
+                "success": False,
+                "message": "CSV analysis not yet implemented"
+            })
 
         else:
-            return f"Unknown tool: {tool_name}"
+            return json.dumps({
+                "success": False,
+                "message": f"Unknown tool: {tool_name}"
+            })
 
     def send_message(
         self,
@@ -167,14 +228,18 @@ You have access to a memory tool to remember important information about users a
         # Step 1: Store user message
         user_msg = message_service.add_user_message(project_id, chat_id, user_message_text)
 
-        # Step 2: Build system prompt
-        system_prompt = self._build_system_prompt(project_id)
+        # Step 2: Get active sources for this project
+        active_sources = self._get_active_sources(project_id)
+        has_sources = len(active_sources) > 0
 
-        # Step 3: Get tools (memory always available)
-        tools = self._get_tools(has_active_sources=False)  # Future: check for actual sources
+        # Step 3: Build system prompt with memory and source context
+        system_prompt = self._build_system_prompt(project_id, active_sources)
+
+        # Step 4: Get tools (search available when sources exist)
+        tools = self._get_tools(has_sources=has_sources, has_csv=False)
 
         try:
-            # Step 4: Build messages and call Claude
+            # Step 5: Build messages and call Claude
             api_messages = message_service.build_api_messages(project_id, chat_id)
 
             response = claude_service.send_message(
@@ -187,7 +252,7 @@ You have access to a memory tool to remember important information about users a
                 project_id=project_id
             )
 
-            # Step 5: Handle tool use loop
+            # Step 6: Handle tool use loop
             iteration = 0
             accumulated_text_parts = []
 
@@ -246,7 +311,7 @@ You have access to a memory tool to remember important information about users a
                     project_id=project_id
                 )
 
-            # Step 6: Store final text response
+            # Step 7: Store final text response
             final_response_text = claude_parsing_utils.extract_text(response)
             if final_response_text.strip():
                 accumulated_text_parts.append(final_response_text)
@@ -271,7 +336,7 @@ You have access to a memory tool to remember important information about users a
                 error=True
             )
 
-        # Step 7: Sync chat index
+        # Step 8: Sync chat index
         chat_service.sync_chat_to_index(project_id, chat_id)
 
         # Future: Auto-rename chat on first message (background task)

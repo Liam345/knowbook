@@ -1,0 +1,18 @@
+{
+  "name": "analyze_csv",
+  "description": "Analyze a CSV data source using an AI data analyst agent. Use this when the user asks questions about data in CSV files. The agent can perform statistical analysis, create visualizations, and answer questions about the data.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "source_id": {
+        "type": "string",
+        "description": "The ID of the CSV source to analyze. Get this from the available sources list."
+      },
+      "query": {
+        "type": "string",
+        "description": "The analysis question or request. Be specific about what insights or visualizations you want."
+      }
+    },
+    "required": ["source_id", "query"]
+  }
+}

@@ -11,9 +11,11 @@ Routes:
 - GET    /projects/<id>/chats/<id>     - Get chat with messages
 - PUT    /projects/<id>/chats/<id>     - Update chat (rename)
 - DELETE /projects/<id>/chats/<id>     - Delete chat
+- GET    /projects/<id>/citations/<chunk_id> - Get citation content
 """
 from flask import jsonify, request, current_app, Blueprint
 from app.services.chat_service import chat_service
+from app.utils.citation_utils import get_chunk_content
 
 # Create blueprint
 chats_bp = Blueprint('chats', __name__)
@@ -161,6 +163,47 @@ def delete_chat(project_id, chat_id):
 
     except Exception as e:
         current_app.logger.error(f"Error deleting chat {chat_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@chats_bp.route('/projects/<project_id>/citations/<chunk_id>', methods=['GET'])
+def get_citation(project_id, chunk_id):
+    """
+    Get content for a citation hover display.
+
+    Educational Note: When users hover over citations [1], [2], etc.,
+    the frontend fetches the source content to show in a tooltip.
+
+    Returns:
+        {
+            "success": true,
+            "citation": {
+                "chunk_id": "abc123_page_5_chunk_2",
+                "content": "The actual text content...",
+                "source_name": "Research Paper.pdf",
+                "page_number": 5
+            }
+        }
+    """
+    try:
+        citation_data = get_chunk_content(project_id, chunk_id)
+
+        if not citation_data:
+            return jsonify({
+                'success': False,
+                'error': 'Citation not found'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'citation': citation_data
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error getting citation {chunk_id}: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
