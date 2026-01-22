@@ -91,4 +91,7 @@ export const settingsApi = {
   },
 }
 
+// Named export for chats.ts and other modules
+export { api }
+
 export default api

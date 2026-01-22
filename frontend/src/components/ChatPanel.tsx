@@ -2,34 +2,104 @@
  * ChatPanel Component
  * Educational Note: Main orchestrator for the chat interface.
  * Handles chat state, API interactions, and UI rendering.
+ * Supports citations with hover cards for source references.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card } from '@/components/ui/card'
-import { 
-  ChevronDown,
+import {
+  CaretDown,
   PaperPlaneTilt,
-  Chat,
+  ChatCircle,
   Plus,
-  DotsThree,
   Trash,
-  PencilSimple
+  Microphone
 } from '@phosphor-icons/react'
 import { chatsAPI } from '@/lib/chats'
-import type { Chat, ChatMetadata, Message, Project } from '@/types'
+import type { Chat as ChatType, ChatMetadata, Project } from '@/types'
 import { useToast } from '@/components/ui/toast'
+import { parseCitations, parseChunkId } from '@/lib/citations'
+import { CitationBadge } from '@/components/chat/CitationBadge'
+import { useVoiceRecording } from '@/hooks/useVoiceRecording'
 
 interface ChatPanelProps {
   project: Project
 }
 
+/**
+ * MessageContent Component
+ * Renders message text with citation badges
+ */
+function MessageContent({ content, projectId }: { content: string; projectId: string }) {
+  // Parse citations from content
+  const { uniqueCitations, markerToNumber } = useMemo(
+    () => parseCitations(content),
+    [content]
+  )
+
+  // If no citations, just render plain text
+  if (uniqueCitations.length === 0) {
+    return <div className="whitespace-pre-wrap">{content}</div>
+  }
+
+  // Split content and render with citation badges
+  const parts: React.ReactNode[] = []
+  const regex = /\[\[cite:([a-zA-Z0-9_-]+_page_\d+_chunk_\d+)\]\]/g
+  let lastIndex = 0
+  let match
+
+  // Reset regex
+  regex.lastIndex = 0
+
+  while ((match = regex.exec(content)) !== null) {
+    // Add text before citation
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`text-${lastIndex}`}>
+          {content.slice(lastIndex, match.index)}
+        </span>
+      )
+    }
+
+    // Add citation badge
+    const fullMarker = match[0]
+    const chunkId = match[1]
+    const citationNumber = markerToNumber.get(fullMarker) || 0
+    const parsed = parseChunkId(chunkId)
+
+    if (parsed) {
+      parts.push(
+        <CitationBadge
+          key={`cite-${match.index}`}
+          citationNumber={citationNumber}
+          chunkId={chunkId}
+          sourceId={parsed.sourceId}
+          pageNumber={parsed.pageNumber}
+          projectId={projectId}
+        />
+      )
+    }
+
+    lastIndex = regex.lastIndex
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push(
+      <span key={`text-${lastIndex}`}>
+        {content.slice(lastIndex)}
+      </span>
+    )
+  }
+
+  return <div className="whitespace-pre-wrap">{parts}</div>
+}
+
 export default function ChatPanel({ project }: ChatPanelProps) {
   // Chat state
   const [message, setMessage] = useState('')
-  const [activeChat, setActiveChat] = useState<Chat | null>(null)
+  const [activeChat, setActiveChat] = useState<ChatType | null>(null)
   const [showChatList, setShowChatList] = useState(false)
   const [allChats, setAllChats] = useState<ChatMetadata[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,6 +110,37 @@ export default function ChatPanel({ project }: ChatPanelProps) {
 
   // Toast hook
   const { success, error } = useToast()
+
+  // Voice recording hook
+  const {
+    isRecording,
+    partialTranscript,
+    transcriptionConfigured,
+    startRecording,
+    stopRecording,
+  } = useVoiceRecording({
+    onError: error,
+    onTranscriptCommit: useCallback((text: string) => {
+      // Append committed text to message
+      setMessage((prev) => {
+        if (prev && !prev.endsWith(' ')) {
+          return prev + ' ' + text
+        }
+        return prev + text
+      })
+    }, []),
+  })
+
+  /**
+   * Toggle recording on mic click
+   */
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording()
+    } else {
+      startRecording()
+    }
+  }
 
   /**
    * Load all chats when component mounts
@@ -215,7 +316,7 @@ export default function ChatPanel({ project }: ChatPanelProps) {
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Chat size={20} />
+            <ChatCircle size={20} />
             <h2 className="font-semibold">Chat</h2>
           </div>
           <div className="flex items-center gap-2">
@@ -231,7 +332,7 @@ export default function ChatPanel({ project }: ChatPanelProps) {
                   <span className="truncate max-w-32">
                     {activeChat?.title || 'Select Chat'}
                   </span>
-                  <ChevronDown size={16} />
+                  <CaretDown size={16} />
                 </Button>
                 
                 {showChatList && (
@@ -278,7 +379,7 @@ export default function ChatPanel({ project }: ChatPanelProps) {
         {!activeChat ? (
           <div className="h-full flex items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <Chat size={48} className="mx-auto mb-4 text-muted-foreground" />
+              <ChatCircle size={48} className="mx-auto mb-4 text-muted-foreground" />
               <p className="mb-2">No chat selected</p>
               <Button onClick={createNewChat} variant="outline">
                 <Plus size={16} className="mr-2" />
@@ -306,7 +407,16 @@ export default function ChatPanel({ project }: ChatPanelProps) {
                         : 'bg-muted'
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}</div>
+                    {msg.role === 'assistant' ? (
+                      <MessageContent
+                        content={typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}
+                        projectId={project.id}
+                      />
+                    ) : (
+                      <div className="whitespace-pre-wrap">
+                        {typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}
+                      </div>
+                    )}
                     <div className={`text-xs mt-1 ${msg.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                       {formatTimestamp(msg.timestamp)}
                     </div>
@@ -331,25 +441,62 @@ export default function ChatPanel({ project }: ChatPanelProps) {
       {/* Message Input */}
       {activeChat && (
         <div className="border-t p-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-end">
+            {/* Microphone Button */}
+            <button
+              type="button"
+              onClick={handleMicClick}
+              disabled={sending || !transcriptionConfigured}
+              className={`flex-shrink-0 p-2 rounded-full transition-colors ${
+                isRecording
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : transcriptionConfigured
+                  ? 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  : 'text-muted-foreground/50 cursor-not-allowed'
+              }`}
+              title={
+                !transcriptionConfigured
+                  ? 'Voice input disabled - ElevenLabs API key not configured'
+                  : isRecording
+                  ? 'Stop recording'
+                  : 'Start voice input'
+              }
+            >
+              <Microphone size={18} />
+            </button>
+
             <Textarea
-              value={message}
+              value={
+                partialTranscript
+                  ? message + (message && !message.endsWith(' ') ? ' ' : '') + partialTranscript
+                  : message
+              }
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Ask about your sources..."
+              placeholder={
+                isRecording
+                  ? 'Listening...'
+                  : !transcriptionConfigured
+                  ? 'Ask about your sources... (voice disabled - set API key)'
+                  : 'Ask about your sources... (Shift+Enter for new line)'
+              }
               className="flex-1 min-h-[2.5rem] max-h-32 resize-none"
-              disabled={sending}
+              disabled={sending || isRecording}
             />
-            <Button 
-              onClick={sendMessage} 
-              disabled={!message.trim() || sending}
+            <Button
+              onClick={sendMessage}
+              disabled={!message.trim() || sending || isRecording}
               size="icon"
             >
               <PaperPlaneTilt size={16} />
             </Button>
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            Press Enter to send, Shift+Enter for new line
+            {isRecording ? (
+              <span className="text-red-500">Recording... Click microphone to stop</span>
+            ) : (
+              'Press Enter to send, Shift+Enter for new line'
+            )}
           </div>
         </div>
       )}

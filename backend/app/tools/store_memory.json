@@ -1,0 +1,22 @@
+{
+  "name": "store_memory",
+  "description": "Store important information about the user or project for future conversations. Use user_memory for preferences and facts that apply across all projects. Use project_memory for information specific to this project.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "user_memory": {
+        "type": "string",
+        "description": "Information about the user that should persist across all projects. Examples: name, preferences, expertise level, communication style preferences."
+      },
+      "project_memory": {
+        "type": "string",
+        "description": "Information specific to this project. Examples: project goals, key decisions made, important context about the topic."
+      },
+      "why_generated": {
+        "type": "string",
+        "description": "Brief explanation of why this information is being stored. Helps with memory organization."
+      }
+    },
+    "required": ["why_generated"]
+  }
+}

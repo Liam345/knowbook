@@ -1,0 +1,25 @@
+{
+  "name": "search_sources",
+  "description": "Search for information within a specific source document. Use this to find relevant content from uploaded documents, transcripts, or other sources. Returns chunks of text with chunk_ids that you can cite in your response using [[cite:chunk_id]] format.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "source_id": {
+        "type": "string",
+        "description": "The ID of the source document to search within. Get this from the available sources list."
+      },
+      "keywords": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Optional list of 1-2 word keywords for text matching search. Good for finding specific terms or names."
+      },
+      "query": {
+        "type": "string",
+        "description": "Optional semantic search query describing what you're looking for. Good for conceptual searches."
+      }
+    },
+    "required": ["source_id"]
+  }
+}

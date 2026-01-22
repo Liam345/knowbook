@@ -1,0 +1,29 @@
+{
+  "name": "studio_signal",
+  "description": "Signal that the user might benefit from a studio generation tool. Use this when the conversation suggests the user could use generated content like blogs, presentations, mind maps, quizzes, etc.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "signals": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "tool_type": {
+              "type": "string",
+              "enum": ["blog", "prd", "business_report", "marketing_strategy", "mind_map", "flow_diagram", "infographic", "wireframe", "quiz", "flash_cards", "presentation", "audio_overview", "video_script", "website", "component"],
+              "description": "The type of studio tool that might help"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Why this tool might be helpful for the user"
+            }
+          },
+          "required": ["tool_type", "reason"]
+        },
+        "description": "List of studio tools that might be helpful"
+      }
+    },
+    "required": ["signals"]
+  }
+}

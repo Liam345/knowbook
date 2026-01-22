@@ -32,6 +32,17 @@ class ClaudeService:
         """Initialize the Claude service."""
         self._client: Optional[Any] = None
 
+    def is_configured(self) -> bool:
+        """
+        Check if Claude API is configured.
+
+        Returns:
+            True if API key is set and anthropic package is installed
+        """
+        if not anthropic:
+            return False
+        return bool(os.getenv('ANTHROPIC_API_KEY'))
+
     def _get_client(self):
         """
         Get or create the Anthropic client.

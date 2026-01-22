@@ -339,3 +339,7 @@ class SourceService:
         sources_index = self._load_sources_index(project_id)
         sources_index.append(source_metadata)
         self._save_sources_index(project_id, sources_index)
+
+
+# Singleton instance
+source_service = SourceService()
