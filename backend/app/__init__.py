@@ -16,11 +16,13 @@ def create_app():
     from app.api.chats import chats_bp
     from app.api.messages import messages_bp
     from app.api.transcription import transcription_bp
+    from app.api.studio import studio_bp
     app.register_blueprint(projects_bp, url_prefix='/api/v1')
     app.register_blueprint(settings_bp)
     app.register_blueprint(sources_bp)
     app.register_blueprint(chats_bp, url_prefix='/api/v1')
     app.register_blueprint(messages_bp, url_prefix='/api/v1')
     app.register_blueprint(transcription_bp, url_prefix='/api/v1')
+    app.register_blueprint(studio_bp, url_prefix='/api/v1')
     
     return app
