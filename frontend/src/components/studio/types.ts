@@ -10,6 +10,10 @@ import {
   ChartBar,
   Target,
   Article,
+  TreeStructure,
+  ChartPieSlice,
+  FlowArrow,
+  Layout,
 } from '@phosphor-icons/react';
 
 /**
@@ -19,13 +23,18 @@ export type GenerationCategory = 'learning' | 'business' | 'content';
 
 /**
  * Studio item IDs - matches backend studio_item enum exactly
- * Note: For Module 7, we focus on document generation types
+ * Module 7: Document generation types
+ * Module 8: Visual content types (mind_map, flow_diagram, infographics, wireframes)
  */
 export type StudioItemId =
   | 'business_report'
   | 'marketing_strategy'
   | 'prd'
-  | 'blog';
+  | 'blog'
+  | 'mind_map'
+  | 'flow_diagram'
+  | 'infographics'
+  | 'wireframes';
 
 /**
  * Studio signal from backend - sent by main chat AI
@@ -79,6 +88,36 @@ export const generationOptions: GenerationOption[] = [
     title: 'PRD',
     description: 'Product requirements doc',
     icon: FileText,
+    category: 'business',
+  },
+
+  // VISUAL (Module 8)
+  {
+    id: 'mind_map',
+    title: 'Mind Map',
+    description: 'Visualize relationships',
+    icon: TreeStructure,
+    category: 'learning',
+  },
+  {
+    id: 'infographics',
+    title: 'Infographics',
+    description: 'Visual data storytelling',
+    icon: ChartPieSlice,
+    category: 'business',
+  },
+  {
+    id: 'flow_diagram',
+    title: 'Flow Diagram',
+    description: 'Process & system flows',
+    icon: FlowArrow,
+    category: 'business',
+  },
+  {
+    id: 'wireframes',
+    title: 'Wireframes',
+    description: 'UI/UX design mockups',
+    icon: Layout,
     category: 'business',
   },
 

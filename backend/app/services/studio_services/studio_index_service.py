@@ -20,7 +20,11 @@ Architecture:
     ├── blog_jobs.py
     ├── prd_jobs.py
     ├── marketing_strategy_jobs.py
-    └── business_report_jobs.py
+    ├── business_report_jobs.py
+    ├── mind_map_jobs.py
+    ├── flow_diagram_jobs.py
+    ├── infographic_jobs.py
+    └── wireframe_jobs.py
 """
 import json
 from datetime import datetime
@@ -53,6 +57,10 @@ def load_index(project_id: str) -> Dict[str, Any]:
         "prd_jobs": [],
         "marketing_strategy_jobs": [],
         "business_report_jobs": [],
+        "mind_map_jobs": [],
+        "flow_diagram_jobs": [],
+        "infographic_jobs": [],
+        "wireframe_jobs": [],
         "last_updated": datetime.now().isoformat()
     }
 
@@ -67,7 +75,8 @@ def load_index(project_id: str) -> Dict[str, Any]:
             needs_save = False
             job_types = [
                 "blog_jobs", "prd_jobs", "marketing_strategy_jobs",
-                "business_report_jobs"
+                "business_report_jobs", "mind_map_jobs", "flow_diagram_jobs",
+                "infographic_jobs", "wireframe_jobs"
             ]
 
             for job_type in job_types:
@@ -130,4 +139,36 @@ from app.services.studio_services.jobs.business_report_jobs import (
     get_business_report_job,
     list_business_report_jobs,
     delete_business_report_job,
+)
+
+from app.services.studio_services.jobs.mind_map_jobs import (
+    create_mind_map_job,
+    update_mind_map_job,
+    get_mind_map_job,
+    list_mind_map_jobs,
+    delete_mind_map_job,
+)
+
+from app.services.studio_services.jobs.flow_diagram_jobs import (
+    create_flow_diagram_job,
+    update_flow_diagram_job,
+    get_flow_diagram_job,
+    list_flow_diagram_jobs,
+    delete_flow_diagram_job,
+)
+
+from app.services.studio_services.jobs.infographic_jobs import (
+    create_infographic_job,
+    update_infographic_job,
+    get_infographic_job,
+    list_infographic_jobs,
+    delete_infographic_job,
+)
+
+from app.services.studio_services.jobs.wireframe_jobs import (
+    create_wireframe_job,
+    update_wireframe_job,
+    get_wireframe_job,
+    list_wireframe_jobs,
+    delete_wireframe_job,
 )

@@ -2,7 +2,8 @@
  * StudioGeneratedContent Component
  * Educational Note: Displays all generated studio content items.
  * Shows list items for each completed job, filtered by active signals.
- * Module 7: Only includes PRD, Blog, Marketing Strategy, and Business Report.
+ * Module 7: PRD, Blog, Marketing Strategy, and Business Report.
+ * Module 8: Mind Map, Flow Diagram, Infographic, and Wireframe.
  */
 
 import React from 'react';
@@ -11,11 +12,19 @@ import { PRDListItem } from './prd';
 import { MarketingStrategyListItem } from './marketingStrategy';
 import { BlogListItem } from './blog';
 import { BusinessReportListItem } from './businessReport';
+import { MindMapListItem } from './mindmap';
+import { FlowDiagramListItem } from './flow-diagrams';
+import { InfographicListItem } from './infographic';
+import { WireframeListItem } from './wireframes';
 import type {
   PRDJob,
   MarketingStrategyJob,
   BlogJob,
-  BusinessReportJob
+  BusinessReportJob,
+  MindMapJob,
+  FlowDiagramJob,
+  InfographicJob,
+  WireframeJob,
 } from '@/lib/api/studio';
 import type { StudioSignal } from './types';
 
@@ -41,6 +50,22 @@ interface StudioGeneratedContentProps {
   savedBusinessReportJobs: BusinessReportJob[];
   setViewingBusinessReportJob: (job: BusinessReportJob) => void;
   downloadBusinessReport: (jobId: string) => void;
+
+  // Mind Map (Module 8)
+  savedMindMapJobs: MindMapJob[];
+  setViewingMindMapJob: (job: MindMapJob) => void;
+
+  // Flow Diagram (Module 8)
+  savedFlowDiagramJobs: FlowDiagramJob[];
+  setViewingFlowDiagramJob: (job: FlowDiagramJob) => void;
+
+  // Infographic (Module 8)
+  savedInfographicJobs: InfographicJob[];
+  setViewingInfographicJob: (job: InfographicJob) => void;
+
+  // Wireframe (Module 8)
+  savedWireframeJobs: WireframeJob[];
+  setViewingWireframeJob: (job: WireframeJob) => void;
 }
 
 export const StudioGeneratedContent: React.FC<StudioGeneratedContentProps> = ({
@@ -57,6 +82,14 @@ export const StudioGeneratedContent: React.FC<StudioGeneratedContentProps> = ({
   savedBusinessReportJobs,
   setViewingBusinessReportJob,
   downloadBusinessReport,
+  savedMindMapJobs,
+  setViewingMindMapJob,
+  savedFlowDiagramJobs,
+  setViewingFlowDiagramJob,
+  savedInfographicJobs,
+  setViewingInfographicJob,
+  savedWireframeJobs,
+  setViewingWireframeJob,
 }) => {
   if (signals.length === 0) {
     return (
@@ -134,6 +167,58 @@ export const StudioGeneratedContent: React.FC<StudioGeneratedContentProps> = ({
               e.stopPropagation();
               downloadBusinessReport(job.id);
             }}
+          />
+        ))}
+
+      {/* Saved Mind Map Jobs (Module 8) - filter by source_id from signals */}
+      {savedMindMapJobs
+        .filter((job) =>
+          signals.some((s) => s.sources.some((src) => src.source_id === job.source_id))
+        )
+        .map((job) => (
+          <MindMapListItem
+            key={job.id}
+            job={job}
+            onClick={() => setViewingMindMapJob(job)}
+          />
+        ))}
+
+      {/* Saved Flow Diagram Jobs (Module 8) - filter by source_id from signals */}
+      {savedFlowDiagramJobs
+        .filter((job) =>
+          signals.some((s) => s.sources.some((src) => src.source_id === job.source_id))
+        )
+        .map((job) => (
+          <FlowDiagramListItem
+            key={job.id}
+            job={job}
+            onClick={() => setViewingFlowDiagramJob(job)}
+          />
+        ))}
+
+      {/* Saved Infographic Jobs (Module 8) - filter by source_id from signals */}
+      {savedInfographicJobs
+        .filter((job) =>
+          signals.some((s) => s.sources.some((src) => src.source_id === job.source_id))
+        )
+        .map((job) => (
+          <InfographicListItem
+            key={job.id}
+            job={job}
+            onClick={() => setViewingInfographicJob(job)}
+          />
+        ))}
+
+      {/* Saved Wireframe Jobs (Module 8) - filter by source_id from signals */}
+      {savedWireframeJobs
+        .filter((job) =>
+          signals.some((s) => s.sources.some((src) => src.source_id === job.source_id))
+        )
+        .map((job) => (
+          <WireframeListItem
+            key={job.id}
+            job={job}
+            onClick={() => setViewingWireframeJob(job)}
           />
         ))}
     </>
