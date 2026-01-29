@@ -1,6 +1,7 @@
 /**
  * Studio Components - Barrel exports
  * Module 7: Document Generation (PRD, Blog, Marketing Strategy, Business Report)
+ * Module 8: Visual Content (Mind Map, Flow Diagram, Infographic, Wireframe)
  */
 
 // Main panel
@@ -30,3 +31,15 @@ export * from './marketingStrategy';
 
 // Business Report components
 export * from './businessReport';
+
+// Mind Map components (Module 8)
+export * from './mindmap';
+
+// Flow Diagram components (Module 8)
+export * from './flow-diagrams';
+
+// Infographic components (Module 8)
+export * from './infographic';
+
+// Wireframe components (Module 8)
+export * from './wireframes';

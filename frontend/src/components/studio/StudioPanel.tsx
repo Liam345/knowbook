@@ -3,7 +3,8 @@
  * Educational Note: Main orchestrator for the Studio panel.
  * Receives signals from chat and handles generation workflows.
  * Shows a picker when multiple signals exist for the same studio item.
- * Module 7: Only includes PRD, Blog, Marketing Strategy, and Business Report.
+ * Module 7: PRD, Blog, Marketing Strategy, and Business Report.
+ * Module 8: Mind Map, Flow Diagram, Infographic, and Wireframe.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -16,6 +17,10 @@ import { usePRDGeneration } from './prd';
 import { useMarketingStrategyGeneration } from './marketingStrategy';
 import { useBlogGeneration } from './blog';
 import { useBusinessReportGeneration } from './businessReport';
+import { useMindMapGeneration } from './mindmap';
+import { useFlowDiagramGeneration } from './flow-diagrams';
+import { useInfographicGeneration } from './infographic';
+import { useWireframeGeneration } from './wireframes';
 import { StudioCollapsedView } from './StudioCollapsedView';
 import { StudioSignalPicker } from './StudioSignalPicker';
 import { StudioProgressIndicators } from './StudioProgressIndicators';
@@ -90,6 +95,50 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     downloadBusinessReport,
   } = useBusinessReportGeneration(projectId);
 
+  // Mind Map generation hook (Module 8)
+  const {
+    savedMindMapJobs,
+    currentMindMapJob,
+    isGeneratingMindMap,
+    viewingMindMapJob,
+    setViewingMindMapJob,
+    loadSavedJobs: loadSavedMindMapJobs,
+    handleMindMapGeneration,
+  } = useMindMapGeneration(projectId);
+
+  // Flow Diagram generation hook (Module 8)
+  const {
+    savedFlowDiagramJobs,
+    currentFlowDiagramJob,
+    isGeneratingFlowDiagram,
+    viewingFlowDiagramJob,
+    setViewingFlowDiagramJob,
+    loadSavedJobs: loadSavedFlowDiagramJobs,
+    handleFlowDiagramGeneration,
+  } = useFlowDiagramGeneration(projectId);
+
+  // Infographic generation hook (Module 8)
+  const {
+    savedInfographicJobs,
+    currentInfographicJob,
+    isGeneratingInfographic,
+    viewingInfographicJob,
+    setViewingInfographicJob,
+    loadSavedJobs: loadSavedInfographicJobs,
+    handleInfographicGeneration,
+  } = useInfographicGeneration(projectId);
+
+  // Wireframe generation hook (Module 8)
+  const {
+    savedWireframeJobs,
+    currentWireframeJob,
+    isGeneratingWireframe,
+    viewingWireframeJob,
+    setViewingWireframeJob,
+    loadSavedJobs: loadSavedWireframeJobs,
+    handleWireframeGeneration,
+  } = useWireframeGeneration(projectId);
+
   // Load saved jobs on mount
   useEffect(() => {
     const loadSavedJobs = async () => {
@@ -105,6 +154,18 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
 
         // Load saved business report jobs
         await loadSavedBusinessReportJobs();
+
+        // Load saved mind map jobs (Module 8)
+        await loadSavedMindMapJobs();
+
+        // Load saved flow diagram jobs (Module 8)
+        await loadSavedFlowDiagramJobs();
+
+        // Load saved infographic jobs (Module 8)
+        await loadSavedInfographicJobs();
+
+        // Load saved wireframe jobs (Module 8)
+        await loadSavedWireframeJobs();
 
       } catch (error) {
         console.error('Failed to load saved jobs:', error);
@@ -148,6 +209,14 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       await handleBlogGeneration(signal);
     } else if (optionId === 'business_report') {
       await handleBusinessReportGeneration(signal);
+    } else if (optionId === 'mind_map') {
+      await handleMindMapGeneration(signal);
+    } else if (optionId === 'flow_diagram') {
+      await handleFlowDiagramGeneration(signal);
+    } else if (optionId === 'infographics') {
+      await handleInfographicGeneration(signal);
+    } else if (optionId === 'wireframes') {
+      await handleWireframeGeneration(signal);
     } else {
       showSuccess(`${getItemTitle(optionId)} generation is coming soon!`);
     }
@@ -209,6 +278,14 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
               currentBlogJob={currentBlogJob}
               isGeneratingBusinessReport={isGeneratingBusinessReport}
               currentBusinessReportJob={currentBusinessReportJob}
+              isGeneratingMindMap={isGeneratingMindMap}
+              currentMindMapJob={currentMindMapJob}
+              isGeneratingFlowDiagram={isGeneratingFlowDiagram}
+              currentFlowDiagramJob={currentFlowDiagramJob}
+              isGeneratingInfographic={isGeneratingInfographic}
+              currentInfographicJob={currentInfographicJob}
+              isGeneratingWireframe={isGeneratingWireframe}
+              currentWireframeJob={currentWireframeJob}
             />
 
             {/* Generated Content List */}
@@ -226,6 +303,14 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
               savedBusinessReportJobs={savedBusinessReportJobs}
               setViewingBusinessReportJob={setViewingBusinessReportJob}
               downloadBusinessReport={downloadBusinessReport}
+              savedMindMapJobs={savedMindMapJobs}
+              setViewingMindMapJob={setViewingMindMapJob}
+              savedFlowDiagramJobs={savedFlowDiagramJobs}
+              setViewingFlowDiagramJob={setViewingFlowDiagramJob}
+              savedInfographicJobs={savedInfographicJobs}
+              setViewingInfographicJob={setViewingInfographicJob}
+              savedWireframeJobs={savedWireframeJobs}
+              setViewingWireframeJob={setViewingWireframeJob}
             />
           </div>
         </ScrollArea>
@@ -257,6 +342,14 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
         viewingBusinessReportJob={viewingBusinessReportJob}
         setViewingBusinessReportJob={setViewingBusinessReportJob}
         downloadBusinessReport={downloadBusinessReport}
+        viewingMindMapJob={viewingMindMapJob}
+        setViewingMindMapJob={setViewingMindMapJob}
+        viewingFlowDiagramJob={viewingFlowDiagramJob}
+        setViewingFlowDiagramJob={setViewingFlowDiagramJob}
+        viewingInfographicJob={viewingInfographicJob}
+        setViewingInfographicJob={setViewingInfographicJob}
+        viewingWireframeJob={viewingWireframeJob}
+        setViewingWireframeJob={setViewingWireframeJob}
       />
     </div>
   );

@@ -40,3 +40,9 @@ export * from './prds';
 export * from './blogs';
 export * from './marketingStrategies';
 export * from './businessReports';
+
+// Visual content APIs (Module 8)
+export * from './mind-maps';
+export * from './flow-diagrams';
+export * from './infographics';
+export * from './wireframes';

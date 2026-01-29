@@ -20,6 +20,10 @@ Content Types Generated:
 - PRD: Product Requirements Documents in Markdown (Claude)
 - Marketing Strategy: Marketing strategy documents in Markdown (Claude)
 - Business Report: Business reports with data analysis (Claude)
+- Mind Map: Hierarchical concept maps for visual learning (Claude)
+- Flow Diagram: Mermaid.js diagrams for processes/workflows (Claude)
+- Infographic: Visual infographics (Claude + Gemini Imagen)
+- Wireframe: UI/UX wireframes in Excalidraw format (Claude)
 
 Routes:
 - POST /projects/<id>/studio/<type>           - Start generation
@@ -37,6 +41,10 @@ from app.api.studio import prds  # noqa: F401
 from app.api.studio import blogs  # noqa: F401
 from app.api.studio import marketing_strategies  # noqa: F401
 from app.api.studio import business_reports  # noqa: F401
+from app.api.studio import mind_maps  # noqa: F401
+from app.api.studio import flow_diagrams  # noqa: F401
+from app.api.studio import infographics  # noqa: F401
+from app.api.studio import wireframes  # noqa: F401
 
 # Educational Note: The noqa comments tell flake8 to ignore the
 # "imported but unused" warning. We import to register routes,

@@ -2,7 +2,8 @@
  * StudioModals Component
  * Educational Note: Renders all studio viewer modals.
  * Consolidates modal components for cleaner StudioPanel structure.
- * Module 7: Only includes PRD, Blog, Marketing Strategy, and Business Report.
+ * Module 7: PRD, Blog, Marketing Strategy, and Business Report.
+ * Module 8: Mind Map, Flow Diagram, Infographic, and Wireframe.
  */
 
 import React from 'react';
@@ -10,11 +11,19 @@ import { PRDViewerModal } from './prd';
 import { MarketingStrategyViewerModal } from './marketingStrategy';
 import { BlogViewerModal } from './blog';
 import { BusinessReportViewerModal } from './businessReport';
+import { MindMapViewerModal } from './mindmap';
+import { FlowDiagramViewerModal } from './flow-diagrams';
+import { InfographicViewerModal } from './infographic';
+import { WireframeViewerModal } from './wireframes';
 import type {
   PRDJob,
   MarketingStrategyJob,
   BlogJob,
-  BusinessReportJob
+  BusinessReportJob,
+  MindMapJob,
+  FlowDiagramJob,
+  InfographicJob,
+  WireframeJob,
 } from '@/lib/api/studio';
 
 interface StudioModalsProps {
@@ -39,6 +48,22 @@ interface StudioModalsProps {
   viewingBusinessReportJob: BusinessReportJob | null;
   setViewingBusinessReportJob: (job: BusinessReportJob | null) => void;
   downloadBusinessReport: (jobId: string) => void;
+
+  // Mind Map (Module 8)
+  viewingMindMapJob: MindMapJob | null;
+  setViewingMindMapJob: (job: MindMapJob | null) => void;
+
+  // Flow Diagram (Module 8)
+  viewingFlowDiagramJob: FlowDiagramJob | null;
+  setViewingFlowDiagramJob: (job: FlowDiagramJob | null) => void;
+
+  // Infographic (Module 8)
+  viewingInfographicJob: InfographicJob | null;
+  setViewingInfographicJob: (job: InfographicJob | null) => void;
+
+  // Wireframe (Module 8)
+  viewingWireframeJob: WireframeJob | null;
+  setViewingWireframeJob: (job: WireframeJob | null) => void;
 }
 
 export const StudioModals: React.FC<StudioModalsProps> = ({
@@ -55,6 +80,14 @@ export const StudioModals: React.FC<StudioModalsProps> = ({
   viewingBusinessReportJob,
   setViewingBusinessReportJob,
   downloadBusinessReport,
+  viewingMindMapJob,
+  setViewingMindMapJob,
+  viewingFlowDiagramJob,
+  setViewingFlowDiagramJob,
+  viewingInfographicJob,
+  setViewingInfographicJob,
+  viewingWireframeJob,
+  setViewingWireframeJob,
 }) => {
   return (
     <>
@@ -88,6 +121,31 @@ export const StudioModals: React.FC<StudioModalsProps> = ({
         viewingBusinessReportJob={viewingBusinessReportJob}
         onClose={() => setViewingBusinessReportJob(null)}
         onDownload={downloadBusinessReport}
+      />
+
+      {/* Mind Map Viewer Modal (Module 8) */}
+      <MindMapViewerModal
+        viewingMindMapJob={viewingMindMapJob}
+        onClose={() => setViewingMindMapJob(null)}
+      />
+
+      {/* Flow Diagram Viewer Modal (Module 8) */}
+      <FlowDiagramViewerModal
+        viewingFlowDiagramJob={viewingFlowDiagramJob}
+        onClose={() => setViewingFlowDiagramJob(null)}
+      />
+
+      {/* Infographic Viewer Modal (Module 8) */}
+      <InfographicViewerModal
+        projectId={projectId}
+        viewingInfographicJob={viewingInfographicJob}
+        onClose={() => setViewingInfographicJob(null)}
+      />
+
+      {/* Wireframe Viewer Modal (Module 8) */}
+      <WireframeViewerModal
+        viewingWireframeJob={viewingWireframeJob}
+        onClose={() => setViewingWireframeJob(null)}
       />
     </>
   );
