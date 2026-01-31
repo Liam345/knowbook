@@ -14,6 +14,9 @@ import {
   ChartPieSlice,
   FlowArrow,
   Layout,
+  Exam,
+  Cards,
+  Presentation,
 } from '@phosphor-icons/react';
 
 /**
@@ -25,6 +28,7 @@ export type GenerationCategory = 'learning' | 'business' | 'content';
  * Studio item IDs - matches backend studio_item enum exactly
  * Module 7: Document generation types
  * Module 8: Visual content types (mind_map, flow_diagram, infographics, wireframes)
+ * Module 9: Interactive content types (quiz, flash_cards, presentation)
  */
 export type StudioItemId =
   | 'business_report'
@@ -34,7 +38,10 @@ export type StudioItemId =
   | 'mind_map'
   | 'flow_diagram'
   | 'infographics'
-  | 'wireframes';
+  | 'wireframes'
+  | 'quiz'
+  | 'flash_cards'
+  | 'presentation';
 
 /**
  * Studio signal from backend - sent by main chat AI
@@ -91,6 +98,22 @@ export const generationOptions: GenerationOption[] = [
     category: 'business',
   },
 
+  // LEARNING (Module 9 - Interactive Content)
+  {
+    id: 'quiz',
+    title: 'Quiz',
+    description: 'Test your knowledge',
+    icon: Exam,
+    category: 'learning',
+  },
+  {
+    id: 'flash_cards',
+    title: 'Flash Cards',
+    description: 'Study cards from sources',
+    icon: Cards,
+    category: 'learning',
+  },
+
   // VISUAL (Module 8)
   {
     id: 'mind_map',
@@ -128,6 +151,13 @@ export const generationOptions: GenerationOption[] = [
     description: 'Long-form articles',
     icon: Article,
     category: 'content',
+  },
+  {
+    id: 'presentation',
+    title: 'Presentation',
+    description: 'Slide deck builder',
+    icon: Presentation,
+    category: 'business',
   },
 ];
 

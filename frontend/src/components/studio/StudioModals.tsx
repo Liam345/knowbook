@@ -2,32 +2,102 @@
  * StudioModals Component
  * Educational Note: Renders all studio viewer modals.
  * Consolidates modal components for cleaner StudioPanel structure.
- * Module 7: PRD, Blog, Marketing Strategy, and Business Report.
- * Module 8: Mind Map, Flow Diagram, Infographic, and Wireframe.
  */
 
 import React from 'react';
+import { AdViewerModal } from './ads';
+import { FlashCardViewerModal } from './flashcards';
+import { MindMapViewerModal } from './mindmap';
+import { WebsiteViewerModal } from './website';
+import { QuizViewerModal } from './quiz';
+import { SocialPostViewerModal } from './social';
+import { InfographicViewerModal } from './infographic';
+import { EmailViewerModal } from './email';
+import { ComponentViewerModal } from './components';
+import { VideoViewerModal } from './video';
+import { FlowDiagramViewerModal } from './flow-diagrams';
+import { WireframeViewerModal } from './wireframes';
+import { PresentationViewerModal } from './presentations';
 import { PRDViewerModal } from './prd';
 import { MarketingStrategyViewerModal } from './marketingStrategy';
 import { BlogViewerModal } from './blog';
 import { BusinessReportViewerModal } from './businessReport';
-import { MindMapViewerModal } from './mindmap';
-import { FlowDiagramViewerModal } from './flow-diagrams';
-import { InfographicViewerModal } from './infographic';
-import { WireframeViewerModal } from './wireframes';
 import type {
+  AdJob,
+  FlashCardJob,
+  MindMapJob,
+  WebsiteJob,
+  QuizJob,
+  SocialPostJob,
+  InfographicJob,
+  EmailJob,
+  ComponentJob,
+  VideoJob,
+  FlowDiagramJob,
+  WireframeJob,
+  PresentationJob,
   PRDJob,
   MarketingStrategyJob,
   BlogJob,
-  BusinessReportJob,
-  MindMapJob,
-  FlowDiagramJob,
-  InfographicJob,
-  WireframeJob,
+  BusinessReportJob
 } from '@/lib/api/studio';
 
 interface StudioModalsProps {
   projectId: string;
+
+  // Ads
+  viewingAdJob: AdJob | null;
+  setViewingAdJob: (job: AdJob | null) => void;
+
+  // Flash Cards
+  viewingFlashCardJob: FlashCardJob | null;
+  setViewingFlashCardJob: (job: FlashCardJob | null) => void;
+
+  // Mind Map
+  viewingMindMapJob: MindMapJob | null;
+  setViewingMindMapJob: (job: MindMapJob | null) => void;
+
+  // Website
+  viewingWebsiteJob: WebsiteJob | null;
+  setViewingWebsiteJob: (job: WebsiteJob | null) => void;
+
+  // Quiz
+  viewingQuizJob: QuizJob | null;
+  setViewingQuizJob: (job: QuizJob | null) => void;
+
+  // Social Posts
+  viewingSocialPostJob: SocialPostJob | null;
+  setViewingSocialPostJob: (job: SocialPostJob | null) => void;
+
+  // Infographic
+  viewingInfographicJob: InfographicJob | null;
+  setViewingInfographicJob: (job: InfographicJob | null) => void;
+
+  // Email
+  viewingEmailJob: EmailJob | null;
+  setViewingEmailJob: (job: EmailJob | null) => void;
+
+  // Components
+  viewingComponentJob: ComponentJob | null;
+  setViewingComponentJob: (job: ComponentJob | null) => void;
+
+  // Video
+  viewingVideoJob: VideoJob | null;
+  setViewingVideoJob: (job: VideoJob | null) => void;
+  downloadVideo: (jobId: string, filename: string) => void;
+
+  // Flow Diagram
+  viewingFlowDiagramJob: FlowDiagramJob | null;
+  setViewingFlowDiagramJob: (job: FlowDiagramJob | null) => void;
+
+  // Wireframe
+  viewingWireframeJob: WireframeJob | null;
+  setViewingWireframeJob: (job: WireframeJob | null) => void;
+
+  // Presentation
+  viewingPresentationJob: PresentationJob | null;
+  setViewingPresentationJob: (job: PresentationJob | null) => void;
+  downloadPresentation: (jobId: string) => void;
 
   // PRD
   viewingPRDJob: PRDJob | null;
@@ -48,26 +118,38 @@ interface StudioModalsProps {
   viewingBusinessReportJob: BusinessReportJob | null;
   setViewingBusinessReportJob: (job: BusinessReportJob | null) => void;
   downloadBusinessReport: (jobId: string) => void;
-
-  // Mind Map (Module 8)
-  viewingMindMapJob: MindMapJob | null;
-  setViewingMindMapJob: (job: MindMapJob | null) => void;
-
-  // Flow Diagram (Module 8)
-  viewingFlowDiagramJob: FlowDiagramJob | null;
-  setViewingFlowDiagramJob: (job: FlowDiagramJob | null) => void;
-
-  // Infographic (Module 8)
-  viewingInfographicJob: InfographicJob | null;
-  setViewingInfographicJob: (job: InfographicJob | null) => void;
-
-  // Wireframe (Module 8)
-  viewingWireframeJob: WireframeJob | null;
-  setViewingWireframeJob: (job: WireframeJob | null) => void;
 }
 
 export const StudioModals: React.FC<StudioModalsProps> = ({
   projectId,
+  viewingAdJob,
+  setViewingAdJob,
+  viewingFlashCardJob,
+  setViewingFlashCardJob,
+  viewingMindMapJob,
+  setViewingMindMapJob,
+  viewingWebsiteJob,
+  setViewingWebsiteJob,
+  viewingQuizJob,
+  setViewingQuizJob,
+  viewingSocialPostJob,
+  setViewingSocialPostJob,
+  viewingInfographicJob,
+  setViewingInfographicJob,
+  viewingEmailJob,
+  setViewingEmailJob,
+  viewingComponentJob,
+  setViewingComponentJob,
+  viewingVideoJob,
+  setViewingVideoJob,
+  downloadVideo,
+  viewingFlowDiagramJob,
+  setViewingFlowDiagramJob,
+  viewingWireframeJob,
+  setViewingWireframeJob,
+  viewingPresentationJob,
+  setViewingPresentationJob,
+  downloadPresentation,
   viewingPRDJob,
   setViewingPRDJob,
   downloadPRD,
@@ -80,17 +162,98 @@ export const StudioModals: React.FC<StudioModalsProps> = ({
   viewingBusinessReportJob,
   setViewingBusinessReportJob,
   downloadBusinessReport,
-  viewingMindMapJob,
-  setViewingMindMapJob,
-  viewingFlowDiagramJob,
-  setViewingFlowDiagramJob,
-  viewingInfographicJob,
-  setViewingInfographicJob,
-  viewingWireframeJob,
-  setViewingWireframeJob,
 }) => {
   return (
     <>
+      {/* Ad Creative Viewer Modal */}
+      <AdViewerModal
+        viewingAdJob={viewingAdJob}
+        onClose={() => setViewingAdJob(null)}
+      />
+
+      {/* Flash Card Viewer Modal */}
+      <FlashCardViewerModal
+        viewingFlashCardJob={viewingFlashCardJob}
+        onClose={() => setViewingFlashCardJob(null)}
+      />
+
+      {/* Mind Map Viewer Modal */}
+      <MindMapViewerModal
+        viewingMindMapJob={viewingMindMapJob}
+        onClose={() => setViewingMindMapJob(null)}
+      />
+
+      {/* Website Viewer Modal */}
+      <WebsiteViewerModal
+        projectId={projectId}
+        viewingWebsiteJob={viewingWebsiteJob}
+        onClose={() => setViewingWebsiteJob(null)}
+      />
+
+      {/* Quiz Viewer Modal */}
+      <QuizViewerModal
+        viewingQuizJob={viewingQuizJob}
+        onClose={() => setViewingQuizJob(null)}
+      />
+
+      {/* Social Post Viewer Modal */}
+      <SocialPostViewerModal
+        viewingSocialPostJob={viewingSocialPostJob}
+        onClose={() => setViewingSocialPostJob(null)}
+      />
+
+      {/* Infographic Viewer Modal */}
+      <InfographicViewerModal
+        viewingInfographicJob={viewingInfographicJob}
+        onClose={() => setViewingInfographicJob(null)}
+      />
+
+      {/* Email Template Modal */}
+      <EmailViewerModal
+        projectId={projectId}
+        viewingEmailJob={viewingEmailJob}
+        onClose={() => setViewingEmailJob(null)}
+      />
+
+      {/* Component Viewer Modal */}
+      <ComponentViewerModal
+        projectId={projectId}
+        viewingComponentJob={viewingComponentJob}
+        onClose={() => setViewingComponentJob(null)}
+      />
+
+      {/* Video Viewer Modal */}
+      <VideoViewerModal
+        projectId={projectId}
+        viewingVideoJob={viewingVideoJob}
+        onClose={() => setViewingVideoJob(null)}
+        onDownload={(filename) => {
+          if (viewingVideoJob) {
+            downloadVideo(viewingVideoJob.id, filename);
+          }
+        }}
+      />
+
+      {/* Flow Diagram Viewer Modal */}
+      <FlowDiagramViewerModal
+        job={viewingFlowDiagramJob}
+        onClose={() => setViewingFlowDiagramJob(null)}
+      />
+
+      {/* Wireframe Viewer Modal */}
+      <WireframeViewerModal
+        job={viewingWireframeJob}
+        onClose={() => setViewingWireframeJob(null)}
+      />
+
+      {/* Presentation Viewer Modal */}
+      <PresentationViewerModal
+        projectId={projectId}
+        viewingPresentationJob={viewingPresentationJob}
+        onClose={() => setViewingPresentationJob(null)}
+        onDownloadPptx={downloadPresentation}
+      />
+
       {/* PRD Viewer Modal */}
       <PRDViewerModal
         projectId={projectId}
@@ -121,31 +284,6 @@ export const StudioModals: React.FC<StudioModalsProps> = ({
         viewingBusinessReportJob={viewingBusinessReportJob}
         onClose={() => setViewingBusinessReportJob(null)}
         onDownload={downloadBusinessReport}
-      />
-
-      {/* Mind Map Viewer Modal (Module 8) */}
-      <MindMapViewerModal
-        viewingMindMapJob={viewingMindMapJob}
-        onClose={() => setViewingMindMapJob(null)}
-      />
-
-      {/* Flow Diagram Viewer Modal (Module 8) */}
-      <FlowDiagramViewerModal
-        viewingFlowDiagramJob={viewingFlowDiagramJob}
-        onClose={() => setViewingFlowDiagramJob(null)}
-      />
-
-      {/* Infographic Viewer Modal (Module 8) */}
-      <InfographicViewerModal
-        projectId={projectId}
-        viewingInfographicJob={viewingInfographicJob}
-        onClose={() => setViewingInfographicJob(null)}
-      />
-
-      {/* Wireframe Viewer Modal (Module 8) */}
-      <WireframeViewerModal
-        viewingWireframeJob={viewingWireframeJob}
-        onClose={() => setViewingWireframeJob(null)}
       />
     </>
   );

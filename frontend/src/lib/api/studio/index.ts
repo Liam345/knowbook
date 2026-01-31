@@ -46,3 +46,17 @@ export * from './mind-maps';
 export * from './flow-diagrams';
 export * from './infographics';
 export * from './wireframes';
+
+// Interactive content APIs (Module 9)
+export * from './quizzes';
+export * from './flash-cards';
+export * from './presentations';
+
+// Media & Code APIs (Module 10)
+export * from './audio';
+export * from './videos';
+export * from './websites';
+export * from './components';
+export * from './ads';
+export * from './emails';
+export * from './social-posts';
