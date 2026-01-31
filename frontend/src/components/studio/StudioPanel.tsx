@@ -3,8 +3,6 @@
  * Educational Note: Main orchestrator for the Studio panel.
  * Receives signals from chat and handles generation workflows.
  * Shows a picker when multiple signals exist for the same studio item.
- * Module 7: PRD, Blog, Marketing Strategy, and Business Report.
- * Module 8: Mind Map, Flow Diagram, Infographic, and Wireframe.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -13,14 +11,24 @@ import { StudioToolsList } from './StudioToolsList';
 import { generationOptions, type StudioSignal, type StudioItemId } from './types';
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '../ui/toast';
+import { useEmailGeneration } from './email';
+import { useWebsiteGeneration } from './website';
+import { useInfographicGeneration } from './infographic';
+import { useFlashCardGeneration } from './flashcards';
+import { useAdGeneration } from './ads';
+import { useSocialPostGeneration } from './social';
+import { useAudioGeneration } from './audio';
+import { useMindMapGeneration } from './mindmap';
+import { useQuizGeneration } from './quiz';
+import { useComponentGeneration } from './components';
+import { useVideoGeneration } from './video';
+import { useFlowDiagramGeneration } from './flow-diagrams';
+import { useWireframeGeneration } from './wireframes';
+import { usePresentationGeneration } from './presentations';
 import { usePRDGeneration } from './prd';
 import { useMarketingStrategyGeneration } from './marketingStrategy';
 import { useBlogGeneration } from './blog';
 import { useBusinessReportGeneration } from './businessReport';
-import { useMindMapGeneration } from './mindmap';
-import { useFlowDiagramGeneration } from './flow-diagrams';
-import { useInfographicGeneration } from './infographic';
-import { useWireframeGeneration } from './wireframes';
 import { StudioCollapsedView } from './StudioCollapsedView';
 import { StudioSignalPicker } from './StudioSignalPicker';
 import { StudioProgressIndicators } from './StudioProgressIndicators';
@@ -46,6 +54,167 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<StudioItemId | null>(null);
   const [selectedSignals, setSelectedSignals] = useState<StudioSignal[]>([]);
+
+  // Audio generation hook
+  const {
+    savedAudioJobs,
+    currentAudioJob,
+    isGeneratingAudio,
+    playingJobId,
+    audioRef,
+    handleAudioEnd,
+    loadSavedJobs: loadSavedAudioJobs,
+    handleAudioGeneration,
+    playAudio,
+    pauseAudio,
+    downloadAudio,
+  } = useAudioGeneration(projectId);
+
+  // Ad generation hook
+  const {
+    savedAdJobs,
+    currentAdJob,
+    isGeneratingAd,
+    viewingAdJob,
+    setViewingAdJob,
+    loadSavedJobs: loadSavedAdJobs,
+    handleAdGeneration,
+  } = useAdGeneration(projectId);
+
+  // Flash card generation hook
+  const {
+    savedFlashCardJobs,
+    currentFlashCardJob,
+    isGeneratingFlashCards,
+    viewingFlashCardJob,
+    setViewingFlashCardJob,
+    loadSavedJobs: loadSavedFlashCardJobs,
+    handleFlashCardGeneration,
+  } = useFlashCardGeneration(projectId);
+
+  // Mind map generation hook
+  const {
+    savedMindMapJobs,
+    currentMindMapJob,
+    isGeneratingMindMap,
+    viewingMindMapJob,
+    setViewingMindMapJob,
+    loadSavedJobs: loadSavedMindMapJobs,
+    handleMindMapGeneration,
+  } = useMindMapGeneration(projectId);
+
+  // Quiz generation hook
+  const {
+    savedQuizJobs,
+    currentQuizJob,
+    isGeneratingQuiz,
+    viewingQuizJob,
+    setViewingQuizJob,
+    loadSavedJobs: loadSavedQuizJobs,
+    handleQuizGeneration,
+  } = useQuizGeneration(projectId);
+
+  // Social post generation hook
+  const {
+    savedSocialPostJobs,
+    currentSocialPostJob,
+    isGeneratingSocialPosts,
+    viewingSocialPostJob,
+    setViewingSocialPostJob,
+    loadSavedJobs: loadSavedSocialPostJobs,
+    handleSocialPostGeneration,
+  } = useSocialPostGeneration(projectId);
+
+  // Infographic generation hook
+  const {
+    savedInfographicJobs,
+    currentInfographicJob,
+    isGeneratingInfographic,
+    viewingInfographicJob,
+    setViewingInfographicJob,
+    loadSavedJobs: loadSavedInfographicJobs,
+    handleInfographicGeneration,
+  } = useInfographicGeneration(projectId);
+
+  // Email generation hook
+  const {
+    savedEmailJobs,
+    currentEmailJob,
+    isGeneratingEmail,
+    viewingEmailJob,
+    setViewingEmailJob,
+    loadSavedJobs: loadSavedEmailJobs,
+    handleEmailGeneration,
+  } = useEmailGeneration(projectId);
+
+  // Website generation hook
+  const {
+    savedWebsiteJobs,
+    currentWebsiteJob,
+    isGeneratingWebsite,
+    viewingWebsiteJob,
+    setViewingWebsiteJob,
+    loadSavedJobs: loadSavedWebsiteJobs,
+    handleWebsiteGeneration,
+    downloadWebsite,
+  } = useWebsiteGeneration(projectId);
+
+  // Component generation hook
+  const {
+    savedComponentJobs,
+    currentComponentJob,
+    isGeneratingComponents,
+    viewingComponentJob,
+    setViewingComponentJob,
+    loadSavedJobs: loadSavedComponentJobs,
+    handleComponentGeneration,
+  } = useComponentGeneration(projectId);
+
+  // Video generation hook
+  const {
+    savedVideoJobs,
+    currentVideoJob,
+    isGeneratingVideo,
+    viewingVideoJob,
+    setViewingVideoJob,
+    loadSavedJobs: loadSavedVideoJobs,
+    handleVideoGeneration,
+    downloadVideo,
+  } = useVideoGeneration(projectId);
+
+  // Flow diagram generation hook
+  const {
+    savedFlowDiagramJobs,
+    currentFlowDiagramJob,
+    isGeneratingFlowDiagram,
+    viewingFlowDiagramJob,
+    setViewingFlowDiagramJob,
+    loadSavedJobs: loadSavedFlowDiagramJobs,
+    handleFlowDiagramGeneration,
+  } = useFlowDiagramGeneration(projectId);
+
+  // Wireframe generation hook
+  const {
+    savedWireframeJobs,
+    currentWireframeJob,
+    isGeneratingWireframe,
+    viewingWireframeJob,
+    setViewingWireframeJob,
+    loadSavedJobs: loadSavedWireframeJobs,
+    handleWireframeGeneration,
+  } = useWireframeGeneration(projectId);
+
+  // Presentation generation hook
+  const {
+    savedPresentationJobs,
+    currentPresentationJob,
+    isGeneratingPresentation,
+    viewingPresentationJob,
+    setViewingPresentationJob,
+    loadSavedJobs: loadSavedPresentationJobs,
+    handlePresentationGeneration,
+    downloadPresentation,
+  } = usePresentationGeneration(projectId);
 
   // PRD generation hook
   const {
@@ -95,54 +264,52 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     downloadBusinessReport,
   } = useBusinessReportGeneration(projectId);
 
-  // Mind Map generation hook (Module 8)
-  const {
-    savedMindMapJobs,
-    currentMindMapJob,
-    isGeneratingMindMap,
-    viewingMindMapJob,
-    setViewingMindMapJob,
-    loadSavedJobs: loadSavedMindMapJobs,
-    handleMindMapGeneration,
-  } = useMindMapGeneration(projectId);
-
-  // Flow Diagram generation hook (Module 8)
-  const {
-    savedFlowDiagramJobs,
-    currentFlowDiagramJob,
-    isGeneratingFlowDiagram,
-    viewingFlowDiagramJob,
-    setViewingFlowDiagramJob,
-    loadSavedJobs: loadSavedFlowDiagramJobs,
-    handleFlowDiagramGeneration,
-  } = useFlowDiagramGeneration(projectId);
-
-  // Infographic generation hook (Module 8)
-  const {
-    savedInfographicJobs,
-    currentInfographicJob,
-    isGeneratingInfographic,
-    viewingInfographicJob,
-    setViewingInfographicJob,
-    loadSavedJobs: loadSavedInfographicJobs,
-    handleInfographicGeneration,
-  } = useInfographicGeneration(projectId);
-
-  // Wireframe generation hook (Module 8)
-  const {
-    savedWireframeJobs,
-    currentWireframeJob,
-    isGeneratingWireframe,
-    viewingWireframeJob,
-    setViewingWireframeJob,
-    loadSavedJobs: loadSavedWireframeJobs,
-    handleWireframeGeneration,
-  } = useWireframeGeneration(projectId);
-
   // Load saved jobs on mount
   useEffect(() => {
     const loadSavedJobs = async () => {
       try {
+        // Load audio jobs
+        await loadSavedAudioJobs();
+
+        // Load ad jobs
+        await loadSavedAdJobs();
+
+        // Load flash card jobs
+        await loadSavedFlashCardJobs();
+
+        // Load mind map jobs
+        await loadSavedMindMapJobs();
+
+        // Load quiz jobs
+        await loadSavedQuizJobs();
+
+        // Load social post jobs
+        await loadSavedSocialPostJobs();
+
+        // Load infographic jobs
+        await loadSavedInfographicJobs();
+
+        // Load email template jobs
+        await loadSavedEmailJobs();
+
+        // Load saved website jobs
+        await loadSavedWebsiteJobs();
+
+        // Load saved component jobs
+        await loadSavedComponentJobs();
+
+        // Load saved video jobs
+        await loadSavedVideoJobs();
+
+        // Load saved flow diagram jobs
+        await loadSavedFlowDiagramJobs();
+
+        // Load saved wireframe jobs
+        await loadSavedWireframeJobs();
+
+        // Load saved presentation jobs
+        await loadSavedPresentationJobs();
+
         // Load saved PRD jobs
         await loadSavedPRDJobs();
 
@@ -154,18 +321,6 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
 
         // Load saved business report jobs
         await loadSavedBusinessReportJobs();
-
-        // Load saved mind map jobs (Module 8)
-        await loadSavedMindMapJobs();
-
-        // Load saved flow diagram jobs (Module 8)
-        await loadSavedFlowDiagramJobs();
-
-        // Load saved infographic jobs (Module 8)
-        await loadSavedInfographicJobs();
-
-        // Load saved wireframe jobs (Module 8)
-        await loadSavedWireframeJobs();
 
       } catch (error) {
         console.error('Failed to load saved jobs:', error);
@@ -201,7 +356,35 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
   const triggerGeneration = async (optionId: StudioItemId, signal: StudioSignal) => {
     setPickerOpen(false);
 
-    if (optionId === 'prd') {
+    if (optionId === 'audio_overview') {
+      await handleAudioGeneration(signal);
+    } else if (optionId === 'ads_creative') {
+      await handleAdGeneration(signal);
+    } else if (optionId === 'flash_cards') {
+      await handleFlashCardGeneration(signal);
+    } else if (optionId === 'mind_map') {
+      await handleMindMapGeneration(signal);
+    } else if (optionId === 'quiz') {
+      await handleQuizGeneration(signal);
+    } else if (optionId === 'social') {
+      await handleSocialPostGeneration(signal);
+    } else if (optionId === 'infographics') {
+      await handleInfographicGeneration(signal);
+    } else if (optionId === 'email_templates') {
+      await handleEmailGeneration(signal);
+    } else if (optionId === 'website') {
+      await handleWebsiteGeneration(signal);
+    } else if (optionId === 'components') {
+      await handleComponentGeneration(signal);
+    } else if (optionId === 'video') {
+      await handleVideoGeneration(signal);
+    } else if (optionId === 'flow_diagram') {
+      await handleFlowDiagramGeneration(signal);
+    } else if (optionId === 'wireframes') {
+      await handleWireframeGeneration(signal);
+    } else if (optionId === 'presentation') {
+      await handlePresentationGeneration(signal);
+    } else if (optionId === 'prd') {
       await handlePRDGeneration(signal);
     } else if (optionId === 'marketing_strategy') {
       await handleMarketingStrategyGeneration(signal);
@@ -209,14 +392,6 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       await handleBlogGeneration(signal);
     } else if (optionId === 'business_report') {
       await handleBusinessReportGeneration(signal);
-    } else if (optionId === 'mind_map') {
-      await handleMindMapGeneration(signal);
-    } else if (optionId === 'flow_diagram') {
-      await handleFlowDiagramGeneration(signal);
-    } else if (optionId === 'infographics') {
-      await handleInfographicGeneration(signal);
-    } else if (optionId === 'wireframes') {
-      await handleWireframeGeneration(signal);
     } else {
       showSuccess(`${getItemTitle(optionId)} generation is coming soon!`);
     }
@@ -253,6 +428,13 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
     <div className="flex flex-col h-full">
       <StudioHeader />
 
+      {/* Hidden audio element for playback */}
+      <audio
+        ref={audioRef}
+        onEnded={handleAudioEnd}
+        onPause={() => playingJobId && audioRef.current?.pause()}
+      />
+
       {/* TOP HALF: Generation Tools */}
       <div className="flex-1 min-h-0 border-b flex flex-col">
         <StudioToolsList signals={signals} onGenerate={handleGenerate} />
@@ -270,6 +452,34 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
           <div className="p-3 space-y-2">
             {/* Progress Indicators */}
             <StudioProgressIndicators
+              isGeneratingAudio={isGeneratingAudio}
+              currentAudioJob={currentAudioJob}
+              isGeneratingAd={isGeneratingAd}
+              currentAdJob={currentAdJob}
+              isGeneratingFlashCards={isGeneratingFlashCards}
+              currentFlashCardJob={currentFlashCardJob}
+              isGeneratingMindMap={isGeneratingMindMap}
+              currentMindMapJob={currentMindMapJob}
+              isGeneratingWebsite={isGeneratingWebsite}
+              currentWebsiteJob={currentWebsiteJob}
+              isGeneratingQuiz={isGeneratingQuiz}
+              currentQuizJob={currentQuizJob}
+              isGeneratingSocialPosts={isGeneratingSocialPosts}
+              currentSocialPostJob={currentSocialPostJob}
+              isGeneratingInfographic={isGeneratingInfographic}
+              currentInfographicJob={currentInfographicJob}
+              isGeneratingEmail={isGeneratingEmail}
+              currentEmailJob={currentEmailJob}
+              isGeneratingComponents={isGeneratingComponents}
+              currentComponentJob={currentComponentJob}
+              isGeneratingVideo={isGeneratingVideo}
+              currentVideoJob={currentVideoJob}
+              isGeneratingFlowDiagram={isGeneratingFlowDiagram}
+              currentFlowDiagramJob={currentFlowDiagramJob}
+              isGeneratingWireframe={isGeneratingWireframe}
+              currentWireframeJob={currentWireframeJob}
+              isGeneratingPresentation={isGeneratingPresentation}
+              currentPresentationJob={currentPresentationJob}
               isGeneratingPRD={isGeneratingPRD}
               currentPRDJob={currentPRDJob}
               isGeneratingMarketingStrategy={isGeneratingMarketingStrategy}
@@ -278,19 +488,45 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
               currentBlogJob={currentBlogJob}
               isGeneratingBusinessReport={isGeneratingBusinessReport}
               currentBusinessReportJob={currentBusinessReportJob}
-              isGeneratingMindMap={isGeneratingMindMap}
-              currentMindMapJob={currentMindMapJob}
-              isGeneratingFlowDiagram={isGeneratingFlowDiagram}
-              currentFlowDiagramJob={currentFlowDiagramJob}
-              isGeneratingInfographic={isGeneratingInfographic}
-              currentInfographicJob={currentInfographicJob}
-              isGeneratingWireframe={isGeneratingWireframe}
-              currentWireframeJob={currentWireframeJob}
             />
 
             {/* Generated Content List */}
             <StudioGeneratedContent
               signals={signals}
+              savedAudioJobs={savedAudioJobs}
+              playingJobId={playingJobId}
+              playAudio={playAudio}
+              pauseAudio={pauseAudio}
+              downloadAudio={downloadAudio}
+              savedAdJobs={savedAdJobs}
+              setViewingAdJob={setViewingAdJob}
+              savedFlashCardJobs={savedFlashCardJobs}
+              setViewingFlashCardJob={setViewingFlashCardJob}
+              savedMindMapJobs={savedMindMapJobs}
+              setViewingMindMapJob={setViewingMindMapJob}
+              savedWebsiteJobs={savedWebsiteJobs}
+              setViewingWebsiteJob={setViewingWebsiteJob}
+              downloadWebsite={downloadWebsite}
+              savedQuizJobs={savedQuizJobs}
+              setViewingQuizJob={setViewingQuizJob}
+              savedSocialPostJobs={savedSocialPostJobs}
+              setViewingSocialPostJob={setViewingSocialPostJob}
+              savedInfographicJobs={savedInfographicJobs}
+              setViewingInfographicJob={setViewingInfographicJob}
+              savedEmailJobs={savedEmailJobs}
+              setViewingEmailJob={setViewingEmailJob}
+              savedComponentJobs={savedComponentJobs}
+              setViewingComponentJob={setViewingComponentJob}
+              savedVideoJobs={savedVideoJobs}
+              setViewingVideoJob={setViewingVideoJob}
+              downloadVideo={downloadVideo}
+              savedFlowDiagramJobs={savedFlowDiagramJobs}
+              setViewingFlowDiagramJob={setViewingFlowDiagramJob}
+              savedWireframeJobs={savedWireframeJobs}
+              setViewingWireframeJob={setViewingWireframeJob}
+              savedPresentationJobs={savedPresentationJobs}
+              setViewingPresentationJob={setViewingPresentationJob}
+              downloadPresentation={downloadPresentation}
               savedPRDJobs={savedPRDJobs}
               setViewingPRDJob={setViewingPRDJob}
               downloadPRD={downloadPRD}
@@ -303,14 +539,6 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
               savedBusinessReportJobs={savedBusinessReportJobs}
               setViewingBusinessReportJob={setViewingBusinessReportJob}
               downloadBusinessReport={downloadBusinessReport}
-              savedMindMapJobs={savedMindMapJobs}
-              setViewingMindMapJob={setViewingMindMapJob}
-              savedFlowDiagramJobs={savedFlowDiagramJobs}
-              setViewingFlowDiagramJob={setViewingFlowDiagramJob}
-              savedInfographicJobs={savedInfographicJobs}
-              setViewingInfographicJob={setViewingInfographicJob}
-              savedWireframeJobs={savedWireframeJobs}
-              setViewingWireframeJob={setViewingWireframeJob}
             />
           </div>
         </ScrollArea>
@@ -330,6 +558,34 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
       {/* All Studio Modals */}
       <StudioModals
         projectId={projectId}
+        viewingAdJob={viewingAdJob}
+        setViewingAdJob={setViewingAdJob}
+        viewingFlashCardJob={viewingFlashCardJob}
+        setViewingFlashCardJob={setViewingFlashCardJob}
+        viewingMindMapJob={viewingMindMapJob}
+        setViewingMindMapJob={setViewingMindMapJob}
+        viewingWebsiteJob={viewingWebsiteJob}
+        setViewingWebsiteJob={setViewingWebsiteJob}
+        viewingQuizJob={viewingQuizJob}
+        setViewingQuizJob={setViewingQuizJob}
+        viewingSocialPostJob={viewingSocialPostJob}
+        setViewingSocialPostJob={setViewingSocialPostJob}
+        viewingInfographicJob={viewingInfographicJob}
+        setViewingInfographicJob={setViewingInfographicJob}
+        viewingEmailJob={viewingEmailJob}
+        setViewingEmailJob={setViewingEmailJob}
+        viewingComponentJob={viewingComponentJob}
+        setViewingComponentJob={setViewingComponentJob}
+        viewingVideoJob={viewingVideoJob}
+        setViewingVideoJob={setViewingVideoJob}
+        downloadVideo={downloadVideo}
+        viewingFlowDiagramJob={viewingFlowDiagramJob}
+        setViewingFlowDiagramJob={setViewingFlowDiagramJob}
+        viewingWireframeJob={viewingWireframeJob}
+        setViewingWireframeJob={setViewingWireframeJob}
+        viewingPresentationJob={viewingPresentationJob}
+        setViewingPresentationJob={setViewingPresentationJob}
+        downloadPresentation={downloadPresentation}
         viewingPRDJob={viewingPRDJob}
         setViewingPRDJob={setViewingPRDJob}
         downloadPRD={downloadPRD}
@@ -342,14 +598,6 @@ export const StudioPanel: React.FC<StudioPanelProps> = ({
         viewingBusinessReportJob={viewingBusinessReportJob}
         setViewingBusinessReportJob={setViewingBusinessReportJob}
         downloadBusinessReport={downloadBusinessReport}
-        viewingMindMapJob={viewingMindMapJob}
-        setViewingMindMapJob={setViewingMindMapJob}
-        viewingFlowDiagramJob={viewingFlowDiagramJob}
-        setViewingFlowDiagramJob={setViewingFlowDiagramJob}
-        viewingInfographicJob={viewingInfographicJob}
-        setViewingInfographicJob={setViewingInfographicJob}
-        viewingWireframeJob={viewingWireframeJob}
-        setViewingWireframeJob={setViewingWireframeJob}
       />
     </div>
   );

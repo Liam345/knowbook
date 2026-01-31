@@ -24,6 +24,16 @@ Content Types Generated:
 - Flow Diagram: Mermaid.js diagrams for processes/workflows (Claude)
 - Infographic: Visual infographics (Claude + Gemini Imagen)
 - Wireframe: UI/UX wireframes in Excalidraw format (Claude)
+- Quiz: Multiple choice questions for knowledge testing (Claude)
+- Flash Cards: Study cards with front/back pairs (Claude)
+- Presentation: PowerPoint slides exported as PPTX (Claude + Playwright)
+- Audio Overview: TTS-based audio summaries (Claude + ElevenLabs)
+- Video: AI-generated video clips (Claude + Google Veo)
+- Website: Multi-page websites with HTML/CSS/JS (Claude + Gemini)
+- Components: Reusable UI components (Claude)
+- Ad Creative: Marketing images for ads (Claude + Gemini Imagen)
+- Email Template: HTML email templates (Claude + Gemini)
+- Social Posts: Platform-specific social media content (Claude + Gemini)
 
 Routes:
 - POST /projects/<id>/studio/<type>           - Start generation
@@ -45,6 +55,16 @@ from app.api.studio import mind_maps  # noqa: F401
 from app.api.studio import flow_diagrams  # noqa: F401
 from app.api.studio import infographics  # noqa: F401
 from app.api.studio import wireframes  # noqa: F401
+from app.api.studio import quizzes  # noqa: F401
+from app.api.studio import flash_cards  # noqa: F401
+from app.api.studio import presentations  # noqa: F401
+from app.api.studio import audio  # noqa: F401
+from app.api.studio import videos  # noqa: F401
+from app.api.studio import websites  # noqa: F401
+from app.api.studio import components  # noqa: F401
+from app.api.studio import ads  # noqa: F401
+from app.api.studio import emails  # noqa: F401
+from app.api.studio import social_posts  # noqa: F401
 
 # Educational Note: The noqa comments tell flake8 to ignore the
 # "imported but unused" warning. We import to register routes,

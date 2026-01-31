@@ -12,3 +12,4 @@ from app.services.ai_agents import blog_agent_service
 from app.services.ai_agents import marketing_strategy_agent_service
 from app.services.ai_agents import business_report_agent_service
 from app.services.ai_agents import csv_analyzer_agent
+from app.services.ai_agents import presentation_agent_service
