@@ -413,3 +413,43 @@ def get_chunks_summary(chunks: List[Chunk]) -> Dict[str, Any]:
         'avg_tokens': total_tokens // len(chunks) if chunks else 0,
         'pages': pages
     }
+
+
+def delete_chunks_for_source(
+    source_id: str,
+    chunks_dir: Path
+) -> int:
+    """
+    Delete all chunk files for a specific source.
+
+    Educational Note: When a source is deleted, we delete the entire
+    source folder containing all its chunk files.
+
+    Args:
+        source_id: The source UUID
+        chunks_dir: Base chunks directory
+
+    Returns:
+        Number of files deleted
+    """
+    import shutil
+
+    source_chunks_dir = chunks_dir / source_id
+    if not source_chunks_dir.exists():
+        return 0
+
+    # Count files before deletion
+    deleted_count = len(list(source_chunks_dir.glob("*.txt")))
+
+    # Delete entire source folder
+    try:
+        shutil.rmtree(source_chunks_dir)
+    except Exception as e:
+        print(f"Error deleting chunks folder {source_chunks_dir}: {e}")
+        return 0
+
+    return deleted_count
+
+
+# Backward compatibility alias
+parse_extracted_text = parse_processed_text

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -6,20 +7,20 @@ load_dotenv()
 
 class Config:
     """Application configuration class."""
-    
+
     # Flask configuration
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-    
+
     # API Keys
     ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
     PINECONE_INDEX_NAME = os.getenv('PINECONE_INDEX_NAME')
-    
-    # Application settings
-    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-    PROJECTS_DIR = os.path.join(DATA_DIR, 'projects')
-    
+
+    # Application settings - use Path for proper path operations
+    DATA_DIR = Path(__file__).parent / 'data'
+    PROJECTS_DIR = DATA_DIR / 'projects'
+
     # Ensure data directories exist
-    os.makedirs(DATA_DIR, exist_ok=True)
-    os.makedirs(PROJECTS_DIR, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    PROJECTS_DIR.mkdir(parents=True, exist_ok=True)

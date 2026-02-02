@@ -1,50 +1,79 @@
 """
-Pinecone service for KnowBook.
+Pinecone Service - Vector database operations for semantic search.
 
-Provides vector storage and retrieval using Pinecone.
-Uses project_id as namespace for source isolation.
+Educational Note: Pinecone is a managed vector database that enables:
+- Storing high-dimensional vectors (embeddings)
+- Fast similarity search using cosine/dot product metrics
+- Metadata filtering for hybrid search
+
+Our application uses:
+- Index: "growthxlearn" (created automatically on API key validation)
+- Dimensions: 1536 (OpenAI text-embedding-3-small)
+- Metric: cosine similarity
+- Namespace: project_id (isolate vectors by project)
 """
 import os
 from typing import List, Dict, Any, Optional
-
-# Pinecone configuration
-DEFAULT_TOP_K = 10  # Default number of results
-EMBEDDING_DIMENSIONS = 1536  # Must match OpenAI embedding dimensions
+from pinecone import Pinecone
 
 
 class PineconeService:
     """
     Service for Pinecone vector database operations.
 
-    Uses lazy initialization and project-based namespaces.
-    Each project has its own namespace for complete isolation.
+    Educational Note: This service handles:
+    - Upserting vectors (insert/update)
+    - Semantic search (query by vector)
+    - Deleting vectors (by ID or filter)
+    - Namespace management (one namespace per project)
     """
+
+    # Index configuration (must match validation_service.py)
+    INDEX_NAME = "growthxlearn"
 
     def __init__(self):
         """Initialize the Pinecone service."""
+        self._client: Optional[Pinecone] = None
         self._index = None
-        self._initialized = False
+
+    def _get_client(self) -> Pinecone:
+        """
+        Get or create the Pinecone client.
+
+        Educational Note: Lazy initialization ensures we don't fail
+        at import time if the API key isn't set yet.
+
+        Raises:
+            ValueError: If PINECONE_API_KEY is not set
+        """
+        if self._client is None:
+            api_key = os.getenv('PINECONE_API_KEY')
+            if not api_key:
+                raise ValueError("PINECONE_API_KEY not found in environment")
+            self._client = Pinecone(api_key=api_key)
+        return self._client
 
     def _get_index(self):
         """
-        Get or create the Pinecone index connection.
+        Get the Pinecone index.
+
+        Educational Note: The index must exist before we can use it.
+        It's created automatically when the user validates their API key
+        in AppSettings (via validation_service.validate_pinecone_key).
 
         Raises:
-            ValueError: If Pinecone is not configured
+            ValueError: If the index doesn't exist
         """
         if self._index is None:
-            api_key = os.getenv('PINECONE_API_KEY')
-            index_name = os.getenv('PINECONE_INDEX_NAME', 'knowbook')
+            client = self._get_client()
 
-            if not api_key:
-                raise ValueError("PINECONE_API_KEY not found in environment")
+            if not client.has_index(self.INDEX_NAME):
+                raise ValueError(
+                    f"Pinecone index '{self.INDEX_NAME}' not found. "
+                    "Please validate your Pinecone API key in App Settings first."
+                )
 
-            from pinecone import Pinecone
-            pc = Pinecone(api_key=api_key)
-
-            # Connect to existing index
-            self._index = pc.Index(index_name)
-            self._initialized = True
+            self._index = client.Index(self.INDEX_NAME)
 
         return self._index
 
@@ -102,7 +131,7 @@ class PineconeService:
         self,
         query_vector: List[float],
         namespace: str,
-        top_k: int = DEFAULT_TOP_K,
+        top_k: int = 5,
         filter_dict: Optional[Dict[str, Any]] = None,
         include_metadata: bool = True
     ) -> List[Dict[str, Any]]:
@@ -143,6 +172,64 @@ class PineconeService:
         except Exception as e:
             print(f"Pinecone query error: {e}")
             return []
+
+    def search(
+        self,
+        query_vector: List[float],
+        namespace: str,
+        top_k: int = 5,
+        filter: Optional[Dict[str, Any]] = None,
+        include_metadata: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        Perform semantic search using a query vector.
+
+        Educational Note: This is the core of RAG retrieval:
+        1. User query is converted to embedding (done elsewhere)
+        2. Query vector is compared to all vectors in namespace
+        3. Most similar vectors (by cosine similarity) are returned
+        4. Metadata (including original text) is retrieved
+
+        Args:
+            query_vector: The embedding of the search query
+            namespace: Project ID to search within
+            top_k: Number of results to return
+            filter: Optional metadata filter (e.g., {"source_id": "abc"})
+            include_metadata: Whether to return metadata with results
+
+        Returns:
+            List of search results with format:
+            [
+                {
+                    "id": "chunk_id",
+                    "score": 0.95,  # Similarity score
+                    "metadata": {"text": "...", "page": 1, ...}
+                },
+                ...
+            ]
+        """
+        index = self._get_index()
+
+        response = index.query(
+            vector=query_vector,
+            namespace=namespace,
+            top_k=top_k,
+            filter=filter,
+            include_metadata=include_metadata
+        )
+
+        # Convert to simple dict format
+        results = []
+        for match in response.matches:
+            result = {
+                "id": match.id,
+                "score": match.score,
+            }
+            if include_metadata and match.metadata:
+                result["metadata"] = dict(match.metadata)
+            results.append(result)
+
+        return results
 
     def delete_vectors(
         self,

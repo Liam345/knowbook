@@ -1,116 +1,186 @@
 """
-OpenAI service for KnowBook.
+Embeddings Service - Create embeddings using OpenAI API.
 
-Provides embedding generation using OpenAI's text-embedding-3-small model.
+Educational Note: Embeddings convert text into dense vectors that capture
+semantic meaning. Similar texts have similar vectors (close in vector space).
+
+OpenAI Embedding Models:
+- text-embedding-3-small: 1536 dimensions, cheaper, good for most use cases
+- text-embedding-3-large: 3072 dimensions, more accurate, more expensive
+- text-embedding-ada-002: Legacy model, 1536 dimensions
+
+We use text-embedding-3-small as the default for cost-effectiveness.
 """
 import os
 from typing import List, Optional, Dict, Any
-
-# Embedding configuration
-EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1536  # Default dimensions for text-embedding-3-small
-MAX_BATCH_SIZE = 100  # OpenAI's recommended batch size
+from openai import OpenAI
+from app.utils.text import clean_text_for_embedding
 
 
 class OpenAIService:
     """
-    Service for OpenAI API operations.
+    Service for creating text embeddings using OpenAI API.
 
-    Primarily used for generating embeddings for vector search.
-    Uses lazy initialization to avoid errors if API key not configured.
+    Educational Note: This service:
+    1. Manages the OpenAI client connection
+    2. Handles single and batch embedding creation
+    3. Uses lazy initialization to avoid errors at import time
     """
 
-    def __init__(self):
-        """Initialize the OpenAI service."""
-        self._client = None
+    # Default model - good balance of quality and cost
+    DEFAULT_MODEL = "text-embedding-3-small"
+    # Dimensions for text-embedding-3-small
+    EMBEDDING_DIMENSIONS = 1536
 
-    def _get_client(self):
+    def __init__(self):
+        """Initialize the embeddings service."""
+        self._client: Optional[OpenAI] = None
+
+    def _get_client(self) -> OpenAI:
         """
         Get or create the OpenAI client.
 
+        Educational Note: Lazy initialization ensures we don't fail
+        at import time if the API key isn't set yet.
+
         Raises:
-            ValueError: If OPENAI_API_KEY is not configured
+            ValueError: If OPENAI_API_KEY is not set
         """
         if self._client is None:
             api_key = os.getenv('OPENAI_API_KEY')
             if not api_key:
                 raise ValueError("OPENAI_API_KEY not found in environment")
-
-            from openai import OpenAI
             self._client = OpenAI(api_key=api_key)
-
         return self._client
 
     def is_configured(self) -> bool:
         """Check if OpenAI is configured."""
         return bool(os.getenv('OPENAI_API_KEY'))
 
-    def create_embedding(self, text: str) -> Optional[List[float]]:
+    def create_embedding(
+        self,
+        text: str,
+        model: str = DEFAULT_MODEL
+    ) -> List[float]:
         """
-        Create an embedding for a single text.
+        Create embedding for a single text string.
+
+        Educational Note: For single texts, this is straightforward.
+        The API returns a vector of floats representing the semantic
+        meaning of the text. Text is cleaned before embedding to
+        remove excessive whitespace.
 
         Args:
-            text: Text to embed
+            text: Text to embed (will be cleaned automatically)
+            model: OpenAI embedding model to use
 
         Returns:
-            Embedding vector or None on failure
+            List of floats (the embedding vector)
+
+        Raises:
+            ValueError: If text is empty or API key not set
+            OpenAI API errors if the request fails
         """
-        if not text:
-            return None
+        # Clean text before embedding
+        clean_text = clean_text_for_embedding(text)
 
-        try:
-            client = self._get_client()
-            response = client.embeddings.create(
-                model=EMBEDDING_MODEL,
-                input=text
-            )
-            return response.data[0].embedding
+        if not clean_text:
+            raise ValueError("Cannot create embedding for empty text")
 
-        except Exception as e:
-            print(f"OpenAI embedding error: {e}")
-            return None
+        client = self._get_client()
+
+        response = client.embeddings.create(
+            model=model,
+            input=clean_text
+        )
+
+        return response.data[0].embedding
 
     def create_embeddings_batch(
         self,
-        texts: List[str]
-    ) -> Optional[List[List[float]]]:
+        texts: List[str],
+        model: str = DEFAULT_MODEL
+    ) -> List[List[float]]:
         """
-        Create embeddings for multiple texts in batch.
+        Create embeddings for multiple texts in a single API call.
 
-        More efficient than calling create_embedding multiple times.
-        Automatically handles batching for large lists.
+        Educational Note: Batch processing is more efficient than
+        individual calls because:
+        - Reduces API overhead
+        - Lower latency overall
+        - Often cheaper per token
+
+        OpenAI supports up to 2048 texts per batch request.
+        All texts are cleaned before embedding.
 
         Args:
-            texts: List of texts to embed
+            texts: List of texts to embed (will be cleaned automatically)
+            model: OpenAI embedding model to use
 
         Returns:
-            List of embedding vectors (same order as input) or None on failure
+            List of embedding vectors (same order as input texts)
+
+        Raises:
+            ValueError: If texts list is empty or API key not set
         """
         if not texts:
             return []
 
-        try:
-            client = self._get_client()
-            all_embeddings = []
+        # Clean texts and filter out empty ones, tracking indices
+        cleaned_texts = []
+        valid_indices = []
+        for i, text in enumerate(texts):
+            clean_text = clean_text_for_embedding(text)
+            if clean_text:
+                cleaned_texts.append(clean_text)
+                valid_indices.append(i)
 
-            # Process in batches
-            for i in range(0, len(texts), MAX_BATCH_SIZE):
-                batch = texts[i:i + MAX_BATCH_SIZE]
+        if not cleaned_texts:
+            raise ValueError("All texts are empty after cleaning")
 
-                response = client.embeddings.create(
-                    model=EMBEDDING_MODEL,
-                    input=batch
-                )
+        client = self._get_client()
 
-                # Extract embeddings in order
-                batch_embeddings = [item.embedding for item in response.data]
-                all_embeddings.extend(batch_embeddings)
+        # Create embeddings in batch
+        response = client.embeddings.create(
+            model=model,
+            input=cleaned_texts
+        )
 
-            return all_embeddings
+        # Extract embeddings in order
+        embeddings_map = {item.index: item.embedding for item in response.data}
+        valid_embeddings = [embeddings_map[i] for i in range(len(cleaned_texts))]
 
-        except Exception as e:
-            print(f"OpenAI batch embedding error: {e}")
-            return None
+        # Reconstruct full list with None for empty texts
+        result = [None] * len(texts)
+        for orig_idx, embedding in zip(valid_indices, valid_embeddings):
+            result[orig_idx] = embedding
+
+        # Replace None with zero vectors for empty texts
+        for i, emb in enumerate(result):
+            if emb is None:
+                result[i] = [0.0] * self.EMBEDDING_DIMENSIONS
+
+        return result
+
+    def get_embedding_dimensions(self, model: str = DEFAULT_MODEL) -> int:
+        """
+        Get the number of dimensions for a given model.
+
+        Educational Note: Different models produce different dimension
+        vectors. This is important for Pinecone index configuration.
+
+        Args:
+            model: The embedding model name
+
+        Returns:
+            Number of dimensions in the embedding vector
+        """
+        dimensions_map = {
+            "text-embedding-3-small": 1536,
+            "text-embedding-3-large": 3072,
+            "text-embedding-ada-002": 1536,
+        }
+        return dimensions_map.get(model, 1536)
 
     def get_embedding_info(self) -> Dict[str, Any]:
         """
@@ -120,12 +190,11 @@ class OpenAIService:
             Dictionary with model info
         """
         return {
-            "model": EMBEDDING_MODEL,
-            "dimensions": EMBEDDING_DIMENSIONS,
-            "max_batch_size": MAX_BATCH_SIZE,
+            "model": self.DEFAULT_MODEL,
+            "dimensions": self.EMBEDDING_DIMENSIONS,
             "configured": self.is_configured()
         }
 
 
-# Global instance
+# Singleton instance for easy import
 openai_service = OpenAIService()
