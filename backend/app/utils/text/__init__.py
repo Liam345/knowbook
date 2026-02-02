@@ -42,10 +42,12 @@ from app.utils.text.processed_output import (
 from app.utils.text.chunking import (
     Chunk,
     parse_processed_text,
+    parse_extracted_text,
     save_chunks_to_files,
     load_chunk_by_id,
     load_chunks_for_source,
-    chunks_to_pinecone_format
+    chunks_to_pinecone_format,
+    delete_chunks_for_source
 )
 
 __all__ = [
@@ -74,8 +76,10 @@ __all__ = [
     # Chunking
     'Chunk',
     'parse_processed_text',
+    'parse_extracted_text',
     'save_chunks_to_files',
     'load_chunk_by_id',
     'load_chunks_for_source',
     'chunks_to_pinecone_format',
+    'delete_chunks_for_source',
 ]
